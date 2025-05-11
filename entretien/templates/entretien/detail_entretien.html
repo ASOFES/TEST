@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Détails de l'entretien{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12 col-lg-8 mx-auto">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-tools me-2"></i>Détails de l'entretien</h5>
+                    <div>
+                        <a href="{% url 'entretien:liste_entretiens' %}" class="btn btn-outline-light btn-sm me-2">
+                            <i class="fas fa-list me-1"></i>Liste
+                        </a>
+                        <a href="{% url 'entretien:modifier_entretien' entretien.id %}" class="btn btn-light btn-sm">
+                            <i class="fas fa-edit me-1"></i>Modifier
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0"><i class="fas fa-car me-2"></i>Informations du véhicule</h5>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-striped">
+                                        <tr>
+                                            <th>Immatriculation :</th>
+                                            <td>{{ entretien.vehicule.immatriculation }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Marque / Modèle :</th>
+                                            <td>{{ entretien.vehicule.marque }} {{ entretien.vehicule.modele }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Couleur :</th>
+                                            <td>{{ entretien.vehicule.couleur }}</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Informations de l'entretien</h5>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-striped">
+                                        <tr>
+                                            <th>Garage / Prestataire :</th>
+                                            <td>{{ entretien.garage }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Date d'entretien :</th>
+                                            <td>{{ entretien.date_entretien|date:"d/m/Y" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Coût :</th>
+                                            <td>{{ entretien.cout }} €</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Statut :</th>
+                                            <td>
+                                                {% if entretien.statut == 'planifie' %}
+                                                    <span class="badge bg-info">{{ entretien.get_statut_display }}</span>
+                                                {% elif entretien.statut == 'en_cours' %}
+                                                    <span class="badge bg-warning">{{ entretien.get_statut_display }}</span>
+                                                {% elif entretien.statut == 'termine' %}
+                                                    <span class="badge bg-success">{{ entretien.get_statut_display }}</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">{{ entretien.get_statut_display }}</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0"><i class="fas fa-clipboard-list me-2"></i>Détails</h5>
+                                </div>
+                                <div class="card-body">
+                                    <h6 class="fw-bold">Motif de l'entretien :</h6>
+                                    <p class="mb-4">{{ entretien.motif|linebreaks }}</p>
+                                    
+                                    {% if entretien.commentaires %}
+                                    <h6 class="fw-bold">Commentaires additionnels :</h6>
+                                    <p class="mb-0">{{ entretien.commentaires|linebreaks }}</p>
+                                    {% endif %}
+                                </div>
+                                <div class="card-footer bg-light text-muted">
+                                    <small>
+                                        <i class="fas fa-user me-1"></i>Créé par: {{ entretien.createur.get_full_name|default:entretien.createur.username }} 
+                                        | <i class="fas fa-calendar me-1"></i>Le: {{ entretien.date_creation|date:"d/m/Y H:i" }}
+                                        {% if entretien.date_modification != entretien.date_creation %}
+                                        | <i class="fas fa-edit me-1"></i>Modifié le: {{ entretien.date_modification|date:"d/m/Y H:i" }}
+                                        {% endif %}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'entretien:liste_entretiens' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Retour à la liste
+                        </a>
+                        <div>
+                            <a href="{% url 'entretien:modifier_entretien' entretien.id %}" class="btn btn-warning me-2">
+                                <i class="fas fa-edit me-2"></i>Modifier
+                            </a>
+                            <a href="{% url 'entretien:supprimer_entretien' entretien.id %}" class="btn btn-danger">
+                                <i class="fas fa-trash me-2"></i>Supprimer
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

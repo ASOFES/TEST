@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Liste des Entretiens{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-tools me-2"></i>Liste des Entretiens</h5>
+                    <div>
+                        <a href="{% url 'entretien:dashboard' %}" class="btn btn-outline-light btn-sm me-2">
+                            <i class="fas fa-tachometer-alt me-1"></i>Tableau de bord
+                        </a>
+                        <a href="{% url 'entretien:ajouter_entretien' %}" class="btn btn-light btn-sm">
+                            <i class="fas fa-plus me-1"></i>Nouvel Entretien
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <!-- Filtres -->
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body">
+                                    <form method="get" class="row g-3">
+                                        <div class="col-md-3">
+                                            <label for="vehicule" class="form-label">Véhicule</label>
+                                            <select name="vehicule" id="vehicule" class="form-select">
+                                                <option value="">Tous les véhicules</option>
+                                                {% for vehicule in vehicules %}
+                                                    <option value="{{ vehicule.id }}" {% if request.GET.vehicule == vehicule.id|stringformat:"i" %}selected{% endif %}>
+                                                        {{ vehicule.immatriculation }} - {{ vehicule.marque }} {{ vehicule.modele }}
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="statut" class="form-label">Statut</label>
+                                            <select name="statut" id="statut" class="form-select">
+                                                <option value="">Tous les statuts</option>
+                                                <option value="planifie" {% if request.GET.statut == 'planifie' %}selected{% endif %}>Planifié</option>
+                                                <option value="en_cours" {% if request.GET.statut == 'en_cours' %}selected{% endif %}>En cours</option>
+                                                <option value="termine" {% if request.GET.statut == 'termine' %}selected{% endif %}>Terminé</option>
+                                                <option value="annule" {% if request.GET.statut == 'annule' %}selected{% endif %}>Annulé</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="date_debut" class="form-label">Date début</label>
+                                            <input type="date" name="date_debut" id="date_debut" class="form-control" value="{{ request.GET.date_debut }}">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="date_fin" class="form-label">Date fin</label>
+                                            <input type="date" name="date_fin" id="date_fin" class="form-control" value="{{ request.GET.date_fin }}">
+                                        </div>
+                                        <div class="col-12 text-end">
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fas fa-filter me-1"></i>Filtrer
+                                            </button>
+                                            <a href="{% url 'entretien:liste_entretiens' %}" class="btn btn-secondary">
+                                                <i class="fas fa-undo me-1"></i>Réinitialiser
+                                            </a>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Liste des entretiens -->
+                    {% if entretiens %}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Véhicule</th>
+                                    <th>Garage</th>
+                                    <th>Date</th>
+                                    <th>Motif</th>
+                                    <th>Coût</th>
+                                    <th>Statut</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for entretien in entretiens %}
+                                <tr>
+                                    <td>{{ entretien.vehicule.immatriculation }}</td>
+                                    <td>{{ entretien.garage }}</td>
+                                    <td>{{ entretien.date_entretien|date:"d/m/Y" }}</td>
+                                    <td>{{ entretien.motif|truncatechars:50 }}</td>
+                                    <td>{{ entretien.cout }} €</td>
+                                    <td>
+                                        {% if entretien.statut == 'planifie' %}
+                                            <span class="badge bg-info">{{ entretien.get_statut_display }}</span>
+                                        {% elif entretien.statut == 'en_cours' %}
+                                            <span class="badge bg-warning">{{ entretien.get_statut_display }}</span>
+                                        {% elif entretien.statut == 'termine' %}
+                                            <span class="badge bg-success">{{ entretien.get_statut_display }}</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">{{ entretien.get_statut_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{% url 'entretien:detail_entretien' entretien.id %}" class="btn btn-sm btn-outline-primary" title="Détails">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{% url 'entretien:modifier_entretien' entretien.id %}" class="btn btn-sm btn-outline-warning" title="Modifier">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'entretien:supprimer_entretien' entretien.id %}" class="btn btn-sm btn-outline-danger" title="Supprimer">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>Aucun entretien trouvé.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialiser les sélecteurs avec Select2 pour une meilleure expérience utilisateur
+        if (typeof $.fn.select2 !== 'undefined') {
+            $('#vehicule, #statut').select2({
+                theme: 'bootstrap-5',
+                width: '100%'
+            });
+        }
+    });
+</script>
+{% endblock %}

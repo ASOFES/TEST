@@ -1,0 +1,489 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Gestion de Véhicules{% endblock %}</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+            --mamo-orange: #f39c12;
+            --mamo-red: #e74c3c;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            color: var(--dark-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .navbar {
+            background-color: var(--primary-color);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+            color: white !important;
+        }
+        
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8) !important;
+            transition: color 0.3s, transform 0.2s;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+        }
+        
+        .nav-link:hover {
+            color: white !important;
+            transform: translateY(-2px);
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .nav-link.active {
+            color: white !important;
+            font-weight: bold;
+            background-color: rgba(255, 255, 255, 0.15);
+        }
+        
+        .dropdown-menu {
+            border: none;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        
+        .dropdown-item {
+            padding: 0.7rem 1.2rem;
+            transition: all 0.2s;
+        }
+        
+        .dropdown-item:hover {
+            background-color: var(--light-color);
+            transform: translateX(5px);
+        }
+        
+        .dropdown-item.active {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        
+        .btn-primary {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+            box-shadow: 0 2px 5px rgba(52, 152, 219, 0.3);
+            transition: all 0.3s;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2980b9;
+            border-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(52, 152, 219, 0.4);
+        }
+        
+        .btn-outline-primary {
+            border-color: var(--secondary-color);
+            color: var(--secondary-color);
+            transition: all 0.3s;
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: var(--secondary-color);
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .card {
+            border-radius: 12px;
+            border: none;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s;
+            overflow: hidden;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card-header {
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 12px 12px 0 0 !important;
+            border-bottom: none;
+            padding: 1rem 1.5rem;
+        }
+        
+        .card-body {
+            padding: 1.5rem;
+        }
+        
+        .footer {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 30px 0 20px;
+            margin-top: auto;
+        }
+        
+        .footer a {
+            transition: all 0.2s;
+        }
+        
+        .footer a:hover {
+            transform: translateX(3px);
+            opacity: 1 !important;
+        }
+        
+        /* Module specific colors */
+        .module-securite {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+        }
+        
+        .module-demandeur {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+        }
+        
+        .module-dispatch {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+        
+        .module-chauffeur {
+            background: linear-gradient(135deg, #f39c12, #d35400);
+        }
+        
+        .module-entretien {
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+        }
+        
+        .module-ravitaillement {
+            background: linear-gradient(135deg, #1abc9c, #16a085);
+        }
+        
+        .module-suivi {
+            background: linear-gradient(135deg, #f1c40f, #f39c12);
+        }
+        
+        .module-rapport {
+            background: linear-gradient(135deg, #34495e, #2c3e50);
+        }
+        
+        /* Floating action button */
+        .floating-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--mamo-orange), var(--mamo-red));
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            transition: all 0.3s;
+            border: none;
+        }
+        
+        .floating-btn:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .floating-btn:hover {
+            transform: scale(1.1);
+            background-color: #c0392b;
+        }
+        
+        .floating-menu {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 999;
+        }
+        
+        .floating-menu.active {
+            display: flex;
+        }
+        
+        .floating-menu-item {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: var(--secondary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s;
+        }
+        
+        .floating-menu-item:hover {
+            transform: scale(1.1);
+            background-color: #2980b9;
+        }
+        
+        /* Module specific colors */
+        .module-securite { background-color: #3498db; }
+        .module-demandeur { background-color: #2ecc71; }
+        .module-dispatch { background-color: #e74c3c; }
+        .module-chauffeur { background-color: #f39c12; }
+        .module-entretien { background-color: #9b59b6; }
+        .module-ravitaillement { background-color: #1abc9c; }
+        .module-rapport { background-color: #34495e; }
+        .module-suivi { background-color: #d35400; }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}">
+                <div class="logo-container rounded-circle bg-white p-2 me-3" style="width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; box-shadow: 0 5px 10px rgba(0,0,0,0.35);">
+                    <img src="{% static 'images/logo_mamo.png' %}" alt="MAMO Logo" style="max-width: 100%; max-height: 100%;">
+                </div>
+                <span class="fw-bold">Gestion de Véhicules</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{% url 'home' %}">
+                            <i class="fas fa-home me-1"></i>Accueil
+                        </a>
+                    </li>
+                    {% if user.is_authenticated %}
+                        <!-- Menu principal adapté selon le rôle -->
+                        {% if user.role == 'demandeur' %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'demandeur' in request.path %}active{% endif %}" href="{% url 'demandeur:dashboard' %}">
+                                <i class="fas fa-clipboard-list me-1"></i>Demandes de mission
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="operationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-car-side me-1"></i>Opérations
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="operationsDropdown">
+                                {% if user.role == 'demandeur' or user.is_superuser %}
+                                <li><a class="dropdown-item {% if 'demandeur' in request.path %}active{% endif %}" href="{% url 'demandeur:dashboard' %}">
+                                    <i class="fas fa-clipboard-list me-1"></i>Demandes de mission
+                                </a></li>
+                                {% endif %}
+                                
+                                {% if user.role == 'dispatch' or user.is_superuser %}
+                                <li><a class="dropdown-item {% if 'dispatch' in request.path %}active{% endif %}" href="{% url 'dispatch:dashboard' %}">
+                                    <i class="fas fa-tasks me-1"></i>Dispatch
+                                </a></li>
+                                {% endif %}
+                                
+                                {% if user.role == 'chauffeur' or user.is_superuser %}
+                                <li><a class="dropdown-item {% if 'chauffeur' in request.path %}active{% endif %}" href="{% url 'chauffeur:dashboard' %}">
+                                    <i class="fas fa-steering-wheel me-1"></i>Chauffeur
+                                </a></li>
+                                {% endif %}
+                            </ul>
+                        </li>
+                        {% endif %}
+                        
+                        {% if user.role != 'demandeur' %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="maintenanceDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-wrench me-1"></i>Maintenance
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="maintenanceDropdown">
+                                {% if user.role == 'securite' or user.is_superuser %}
+                                <li><a class="dropdown-item {% if 'securite' in request.path %}active{% endif %}" href="{% url 'securite:dashboard' %}">
+                                    <i class="fas fa-shield-alt me-1"></i>Sécurité
+                                </a></li>
+                                {% endif %}
+                                <li><a class="dropdown-item {% if 'entretien' in request.path %}active{% endif %}" href="{% url 'entretien:dashboard' %}"><i class="fas fa-tools me-1"></i>Entretiens</a></li>
+                                <li><a class="dropdown-item {% if 'ravitaillement' in request.path %}active{% endif %}" href="{% url 'ravitaillement:dashboard' %}"><i class="fas fa-gas-pump me-1"></i>Ravitaillement</a></li>
+                            </ul>
+                        </li>
+                        {% endif %}
+                        
+                        {% if user.role != 'demandeur' %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="analyseDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-chart-bar me-1"></i>Analyse
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="analyseDropdown">
+                                <li><a class="dropdown-item {% if 'suivi-kilometrage' in request.path %}active{% endif %}" href="{% url 'dispatch:suivi_kilometrage' %}"><i class="fas fa-route me-1"></i>Suivi Kilométrique</a></li>
+                                <li><a class="dropdown-item {% if 'suivi' in request.path and 'suivi-kilometrage' not in request.path %}active{% endif %}" href="{% url 'suivi:dashboard' %}"><i class="fas fa-chart-line me-1"></i>Suivi</a></li>
+                                <li><a class="dropdown-item {% if 'rapport' in request.path %}active{% endif %}" href="{% url 'rapport:dashboard' %}"><i class="fas fa-file-alt me-1"></i>Rapports</a></li>
+                            </ul>
+                        </li>
+                        {% endif %}
+                        
+                        {% if user.role == 'admin' %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-cogs me-1"></i>Administration
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="adminDropdown">
+                                <li><a class="dropdown-item {% if 'users' in request.path %}active{% endif %}" href="{% url 'user_list' %}"><i class="fas fa-users me-1"></i>Utilisateurs</a></li>
+                                <li><a class="dropdown-item {% if 'vehicules' in request.path %}active{% endif %}" href="{% url 'vehicule_list' %}"><i class="fas fa-car me-1"></i>Véhicules (Interface personnalisée)</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{% url 'admin:core_vehicule_changelist' %}"><i class="fas fa-car me-1"></i>Véhicules (Admin Django)</a></li>
+                                <li><a class="dropdown-item" href="{% url 'admin:index' %}"><i class="fas fa-toolbox me-1"></i>Admin Django</a></li>
+                            </ul>
+                        </li>
+                        {% endif %}
+                    {% endif %}
+                </ul>
+                <ul class="navbar-nav">
+                    {% if user.is_authenticated %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-user-circle me-1"></i>{{ user.username }}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                <li><a class="dropdown-item" href="{% url 'profile' %}"><i class="fas fa-user me-1"></i>Profil</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt me-1"></i>Déconnexion</a></li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'login' %}"><i class="fas fa-sign-in-alt me-1"></i>Connexion</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container py-4">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Floating Action Button -->
+    {% if user.is_authenticated %}
+    <div class="floating-btn" id="floatingBtn">
+        <i class="fas fa-plus"></i>
+    </div>
+    <div class="floating-menu" id="floatingMenu">
+        {% if user.role == 'demandeur' or user.is_superuser %}
+        <a href="#" class="floating-menu-item" title="Nouvelle demande">
+            <i class="fas fa-clipboard-list"></i>
+        </a>
+        {% endif %}
+        {% if user.role == 'admin' or user.is_superuser %}
+        <a href="#" class="floating-menu-item" title="Nouveau véhicule">
+            <i class="fas fa-car"></i>
+        </a>
+        <a href="#" class="floating-menu-item" title="Nouvel utilisateur">
+            <i class="fas fa-user-plus"></i>
+        </a>
+        {% endif %}
+        {% if user.role == 'securite' or user.is_superuser %}
+        <a href="#" class="floating-menu-item" title="Nouvelle check-list">
+            <i class="fas fa-shield-alt"></i>
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="logo-container rounded-circle bg-white p-1 me-3" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
+                            <img src="{% static 'images/logo_mamo.png' %}" alt="MAMO Logo" style="max-width: 100%; max-height: 100%;">
+                        </div>
+                        <h5 class="mb-0">MAMO</h5>
+                    </div>
+                    <p>Une application complète pour la gestion de votre flotte de véhicules.</p>
+                </div>
+                <div class="col-md-4">
+                    <h5>Liens rapides</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="{% url 'home' %}" class="text-white"><i class="fas fa-home me-2"></i>Accueil</a></li>
+                        {% if user.is_authenticated %}
+                        <li><a href="{% url 'profile' %}" class="text-white"><i class="fas fa-user me-2"></i>Profil</a></li>
+                        <li><a href="{% url 'logout' %}" class="text-white"><i class="fas fa-sign-out-alt me-2"></i>Déconnexion</a></li>
+                        {% else %}
+                        <li><a href="{% url 'login' %}" class="text-white"><i class="fas fa-sign-in-alt me-2"></i>Connexion</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <h5>Contact</h5>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-map-marker-alt me-2"></i>123 Rue Principale, Kinshasa</li>
+                        <li><i class="fas fa-envelope me-2"></i>contact@mamo.com</li>
+                        <li><i class="fas fa-phone me-2"></i>+243 123 456 789</li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="bg-white">
+            <div class="text-center">
+                <p class="mb-0">&copy; {% now "Y" %} MAMO. Tous droits réservés.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JS -->
+    <script>
+        // Activer tous les tooltips
+        document.addEventListener('DOMContentLoaded', function() {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl)
+            })
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Floating action button
+            const floatingBtn = document.getElementById('floatingBtn');
+            const floatingMenu = document.getElementById('floatingMenu');
+            
+            if (floatingBtn && floatingMenu) {
+                floatingBtn.addEventListener('click', function() {
+                    floatingMenu.classList.toggle('active');
+                });
+            }
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

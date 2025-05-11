@@ -1,0 +1,356 @@
+{% extends 'base.html' %}
+
+{% block title %}Nouvelle check-list de sécurité{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h1><i class="fas fa-clipboard-check me-2"></i>Nouvelle check-list de sécurité</h1>
+            <a href="{% url 'securite:dashboard' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Retour au tableau de bord
+            </a>
+        </div>
+        <hr>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header module-securite text-white">
+                <h5 class="mb-0"><i class="fas fa-clipboard-list me-2"></i>Formulaire de contrôle</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <p><strong>Veuillez corriger les erreurs suivantes :</strong></p>
+                        <ul>
+                            {% for field in form %}
+                                {% for error in field.errors %}
+                                <li>{{ field.label }} : {{ error }}</li>
+                                {% endfor %}
+                            {% endfor %}
+                            {% for error in form.non_field_errors %}
+                            <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_vehicule" class="form-label">Véhicule</label>
+                                <select name="vehicule" id="id_vehicule" class="form-select {% if form.vehicule.errors %}is-invalid{% endif %}" required>
+                                    <option value="">Sélectionnez un véhicule</option>
+                                    {% for vehicule in vehicules %}
+                                    <option value="{{ vehicule.id }}" {% if form.vehicule.value|stringformat:"i" == vehicule.id|stringformat:"i" %}selected{% endif %}>
+                                        {{ vehicule.immatriculation }} - {{ vehicule.marque }} {{ vehicule.modele }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                {% if form.vehicule.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.vehicule.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="id_kilometrage" class="form-label">Kilométrage actuel</label>
+                                <div class="input-group">
+                                    <input type="number" name="kilometrage" id="id_kilometrage" class="form-control {% if form.kilometrage.errors %}is-invalid{% endif %}" value="{{ form.kilometrage.value|default:'' }}" required min="0">
+                                    <span class="input-group-text">km</span>
+                                    {% if form.kilometrage.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.kilometrage.errors %}
+                                        {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_lieu_controle" class="form-label">Lieu du contrôle</label>
+                                <input type="text" name="lieu_controle" id="id_lieu_controle" class="form-control {% if form.lieu_controle.errors %}is-invalid{% endif %}" value="{{ form.lieu_controle.value|default:'' }}" required>
+                                {% if form.lieu_controle.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.lieu_controle.errors %}
+                                    {{ error }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h5 class="mb-3">Éléments à vérifier</h5>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0">Éléments du véhicule</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <!-- Phares avant -->
+                                    <div class="mb-3">
+                                        <label class="form-label">Phares avant</label>
+                                        <div class="form-check">
+                                            <input type="radio" class="form-check-input" id="id_phares_avant_ok" name="phares_avant" value="ok" {% if form.phares_avant.value == 'ok' or not form.phares_avant.value %}checked{% endif %}>
+                                            <label class="form-check-label" for="id_phares_avant_ok">OK</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input type="radio" class="form-check-input" id="id_phares_avant_defectueux" name="phares_avant" value="defectueux" {% if form.phares_avant.value == 'defectueux' %}checked{% endif %}>
+                                            <label class="form-check-label" for="id_phares_avant_defectueux">Défectueux</label>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Phares arrière -->
+                                    <div class="mb-3">
+                                        <label class="form-label">Phares arrière</label>
+                                        <div class="form-check">
+                                            <input type="radio" class="form-check-input" id="id_phares_arriere_ok" name="phares_arriere" value="ok" {% if form.phares_arriere.value == 'ok' or not form.phares_arriere.value %}checked{% endif %}>
+                                            <label class="form-check-label" for="id_phares_arriere_ok">OK</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input type="radio" class="form-check-input" id="id_phares_arriere_defectueux" name="phares_arriere" value="defectueux" {% if form.phares_arriere.value == 'defectueux' %}checked{% endif %}>
+                                            <label class="form-check-label" for="id_phares_arriere_defectueux">Défectueux</label>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Clignotants -->
+                                    <div class="mb-3">
+                                        <label class="form-label">Clignotants</label>
+                                        <div class="form-check">
+                                            <input type="radio" class="form-check-input" id="id_clignotants_ok" name="clignotants" value="ok" {% if form.clignotants.value == 'ok' or not form.clignotants.value %}checked{% endif %}>
+                                            <label class="form-check-label" for="id_clignotants_ok">OK</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input type="radio" class="form-check-input" id="id_clignotants_defectueux" name="clignotants" value="defectueux" {% if form.clignotants.value == 'defectueux' %}checked{% endif %}>
+                                            <label class="form-check-label" for="id_clignotants_defectueux">Défectueux</label>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- État des pneus -->
+                                    <div class="mb-3">
+                                        <label class="form-label">État des pneus</label>
+                                        <div class="form-check">
+                                            <input type="radio" class="form-check-input" id="id_etat_pneus_ok" name="etat_pneus" value="ok" {% if form.etat_pneus.value == 'ok' or not form.etat_pneus.value %}checked{% endif %}>
+                                            <label class="form-check-label" for="id_etat_pneus_ok">OK</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input type="radio" class="form-check-input" id="id_etat_pneus_usure" name="etat_pneus" value="usure" {% if form.etat_pneus.value == 'usure' %}checked{% endif %}>
+                                            <label class="form-check-label" for="id_etat_pneus_usure">Usure</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input type="radio" class="form-check-input" id="id_etat_pneus_critique" name="etat_pneus" value="critique" {% if form.etat_pneus.value == 'critique' %}checked{% endif %}>
+                                            <label class="form-check-label" for="id_etat_pneus_critique">Critique</label>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Carrosserie -->
+                                    <div class="mb-3">
+                                        <label class="form-label">Carrosserie</label>
+                                        <div class="form-check">
+                                            <input type="radio" class="form-check-input" id="id_carrosserie_ok" name="carrosserie" value="ok" {% if form.carrosserie.value == 'ok' or not form.carrosserie.value %}checked{% endif %}>
+                                            <label class="form-check-label" for="id_carrosserie_ok">OK</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input type="radio" class="form-check-input" id="id_carrosserie_rayures" name="carrosserie" value="rayures" {% if form.carrosserie.value == 'rayures' %}checked{% endif %}>
+                                            <label class="form-check-label" for="id_carrosserie_rayures">Rayures mineures</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input type="radio" class="form-check-input" id="id_carrosserie_dommages" name="carrosserie" value="dommages" {% if form.carrosserie.value == 'dommages' %}checked{% endif %}>
+                                            <label class="form-check-label" for="id_carrosserie_dommages">Dommages importants</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <!-- Tableau de bord -->
+                                    <div class="mb-3">
+                                        <label class="form-label">Tableau de bord</label>
+                                        <div class="form-check">
+                                            <input type="radio" class="form-check-input" id="id_tableau_bord_ok" name="tableau_bord" value="ok" {% if form.tableau_bord.value == 'ok' or not form.tableau_bord.value %}checked{% endif %}>
+                                            <label class="form-check-label" for="id_tableau_bord_ok">OK</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input type="radio" class="form-check-input" id="id_tableau_bord_voyants" name="tableau_bord" value="voyants" {% if form.tableau_bord.value == 'voyants' %}checked{% endif %}>
+                                            <label class="form-check-label" for="id_tableau_bord_voyants">Voyants allumés</label>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Freins -->
+                                    <div class="mb-3">
+                                        <label class="form-label">Freins</label>
+                                        <div class="form-check">
+                                            <input type="radio" class="form-check-input" id="id_freins_ok" name="freins" value="ok" {% if form.freins.value == 'ok' or not form.freins.value %}checked{% endif %}>
+                                            <label class="form-check-label" for="id_freins_ok">OK</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input type="radio" class="form-check-input" id="id_freins_usure" name="freins" value="usure" {% if form.freins.value == 'usure' %}checked{% endif %}>
+                                            <label class="form-check-label" for="id_freins_usure">Usure</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input type="radio" class="form-check-input" id="id_freins_defectueux" name="freins" value="defectueux" {% if form.freins.value == 'defectueux' %}checked{% endif %}>
+                                            <label class="form-check-label" for="id_freins_defectueux">Défectueux</label>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Ceintures de sécurité -->
+                                    <div class="mb-3">
+                                        <label class="form-label">Ceintures de sécurité</label>
+                                        <div class="form-check">
+                                            <input type="radio" class="form-check-input" id="id_ceintures_ok" name="ceintures" value="ok" {% if form.ceintures.value == 'ok' or not form.ceintures.value %}checked{% endif %}>
+                                            <label class="form-check-label" for="id_ceintures_ok">OK</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input type="radio" class="form-check-input" id="id_ceintures_defectueuses" name="ceintures" value="defectueuses" {% if form.ceintures.value == 'defectueuses' %}checked{% endif %}>
+                                            <label class="form-check-label" for="id_ceintures_defectueuses">Défectueuses</label>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Propreté -->
+                                    <div class="mb-3">
+                                        <label class="form-label">Propreté</label>
+                                        <div class="form-check">
+                                            <input type="radio" class="form-check-input" id="id_proprete_ok" name="proprete" value="ok" {% if form.proprete.value == 'ok' or not form.proprete.value %}checked{% endif %}>
+                                            <label class="form-check-label" for="id_proprete_ok">OK</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input type="radio" class="form-check-input" id="id_proprete_sale" name="proprete" value="sale" {% if form.proprete.value == 'sale' %}checked{% endif %}>
+                                            <label class="form-check-label" for="id_proprete_sale">Sale</label>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Documents et équipements -->
+                                    <div class="mb-3">
+                                        <label class="form-label">Carte grise</label>
+                                        <div class="form-check">
+                                            <input type="radio" class="form-check-input" id="id_carte_grise_present" name="carte_grise" value="present" {% if form.carte_grise.value == 'present' or not form.carte_grise.value %}checked{% endif %}>
+                                            <label class="form-check-label" for="id_carte_grise_present">Présente</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input type="radio" class="form-check-input" id="id_carte_grise_absent" name="carte_grise" value="absent" {% if form.carte_grise.value == 'absent' %}checked{% endif %}>
+                                            <label class="form-check-label" for="id_carte_grise_absent">Absente</label>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Assurance</label>
+                                        <div class="form-check">
+                                            <input type="radio" class="form-check-input" id="id_assurance_present" name="assurance" value="present" {% if form.assurance.value == 'present' or not form.assurance.value %}checked{% endif %}>
+                                            <label class="form-check-label" for="id_assurance_present">Présente</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input type="radio" class="form-check-input" id="id_assurance_absent" name="assurance" value="absent" {% if form.assurance.value == 'absent' %}checked{% endif %}>
+                                            <label class="form-check-label" for="id_assurance_absent">Absente</label>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Triangle de signalisation</label>
+                                        <div class="form-check">
+                                            <input type="radio" class="form-check-input" id="id_triangle_present" name="triangle" value="present" {% if form.triangle.value == 'present' or not form.triangle.value %}checked{% endif %}>
+                                            <label class="form-check-label" for="id_triangle_present">Présent</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input type="radio" class="form-check-input" id="id_triangle_absent" name="triangle" value="absent" {% if form.triangle.value == 'absent' %}checked{% endif %}>
+                                            <label class="form-check-label" for="id_triangle_absent">Absent</label>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Logos</label>
+                                        <div class="form-check">
+                                            <input type="radio" class="form-check-input" id="id_logos_present" name="logos" value="present" {% if form.logos.value == 'present' or not form.logos.value %}checked{% endif %}>
+                                            <label class="form-check-label" for="id_logos_present">Présents</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input type="radio" class="form-check-input" id="id_logos_absent" name="logos" value="absent" {% if form.logos.value == 'absent' %}checked{% endif %}>
+                                            <label class="form-check-label" for="id_logos_absent">Absents</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="id_commentaires" class="form-label">Commentaires</label>
+                        <textarea name="commentaires" id="id_commentaires" rows="4" class="form-control {% if form.commentaires.errors %}is-invalid{% endif %}">{{ form.commentaires.value|default:'' }}</textarea>
+                        {% if form.commentaires.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.commentaires.errors %}
+                            {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        <div class="form-text">Ajoutez des observations supplémentaires concernant l'état du véhicule.</div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Enregistrer la check-list
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Fonction pour mettre à jour le bouton de soumission en fonction des cases cochées
+        function updateSubmitButton() {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            const totalCheckboxes = checkboxes.length;
+            let checkedCount = 0;
+            
+            checkboxes.forEach(checkbox => {
+                if (checkbox.checked) {
+                    checkedCount++;
+                }
+            });
+            
+            const submitButton = document.querySelector('button[type="submit"]');
+            
+            if (checkedCount === totalCheckboxes) {
+                submitButton.classList.remove('btn-warning', 'btn-danger');
+                submitButton.classList.add('btn-success');
+                submitButton.innerHTML = '<i class="fas fa-check-circle me-2"></i>Enregistrer (Conforme)';
+            } else if (checkedCount >= totalCheckboxes * 0.7) {
+                submitButton.classList.remove('btn-success', 'btn-danger');
+                submitButton.classList.add('btn-warning');
+                submitButton.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Enregistrer (Anomalies mineures)';
+            } else {
+                submitButton.classList.remove('btn-success', 'btn-warning');
+                submitButton.classList.add('btn-danger');
+                submitButton.innerHTML = '<i class="fas fa-ban me-2"></i>Enregistrer (Non conforme)';
+            }
+        }
+        
+        // Ajouter des écouteurs d'événements à toutes les cases à cocher
+        const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', updateSubmitButton);
+        });
+        
+        // Initialiser l'état du bouton
+        updateSubmitButton();
+    });
+</script>
+{% endblock %}

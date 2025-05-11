@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Accueil - Gestion de Véhicules{% endblock %}
+
+{% block content %}
+<!-- Page d'accueil avec design moderne -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 overflow-hidden">
+            <div class="card-body p-0">
+                <div class="bg-primary text-white py-5 px-4" style="background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));">
+                    <div class="row align-items-center">
+                        <div class="col-lg-8 col-md-7">
+                            <h1 class="display-4 fw-bold mb-3">Bienvenue chez MAMO</h1>
+                            <p class="lead mb-4">Une solution complète pour gérer efficacement votre flotte de véhicules, optimiser les missions et réduire les coûts opérationnels.</p>
+                            {% if not user.is_authenticated %}
+                            <div class="mt-4">
+                                <a href="{% url 'login' %}" class="btn btn-light btn-lg me-2 shadow-sm">
+                                    <i class="fas fa-sign-in-alt me-2"></i>Connexion
+                                </a>
+                            </div>
+                            {% else %}
+                            <div class="mt-4">
+                                <a href="#" class="btn btn-light btn-lg me-2 shadow-sm" data-bs-toggle="modal" data-bs-target="#quickStartModal">
+                                    <i class="fas fa-play-circle me-2"></i>Démarrage rapide
+                                </a>
+                                <a href="#features" class="btn btn-outline-light btn-lg">
+                                    <i class="fas fa-info-circle me-2"></i>En savoir plus
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-lg-4 col-md-5 d-none d-md-block text-center">
+                            <div class="bg-white rounded-circle mx-auto p-3 shadow" style="width: 200px; height: 200px; display: flex; align-items: center; justify-content: center;">
+                                <img src="{% static 'images/logo_mamo.png' %}" alt="MAMO Logo" class="img-fluid" style="max-width: 80%; max-height: 80%;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if user.is_authenticated %}
+                <div class="p-4">
+                    <h2 class="mb-4 text-center">Activités récentes</h2>
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            {% if activites %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Utilisateur</th>
+                                            <th>Action</th>
+                                            <th>Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for activite in activites %}
+                                        <tr>
+                                            <td>{{ activite.utilisateur.username }}</td>
+                                            <td>{{ activite.action }}</td>
+                                            <td>{{ activite.date_action|date:"d/m/Y H:i" }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <p class="text-center">Aucune activité récente.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de démarrage rapide -->
+<div class="modal fade" id="quickStartModal" tabindex="-1" aria-labelledby="quickStartModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: white;">
+                <h5 class="modal-title" id="quickStartModalLabel"><i class="fas fa-play-circle me-2"></i>Démarrage rapide</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body text-center">
+                                <i class="fas fa-clipboard-list fa-3x text-success mb-3"></i>
+                                <h4>Demandeur</h4>
+                                <p>Créez et suivez vos demandes de missions</p>
+                                <a href="{% url 'demandeur:dashboard' %}" class="btn btn-outline-success w-100">
+                                    <i class="fas fa-arrow-right me-2"></i>Accéder
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body text-center">
+                                <i class="fas fa-tasks fa-3x text-danger mb-3"></i>
+                                <h4>Dispatch</h4>
+                                <p>Gérez les demandes et assignez les ressources</p>
+                                <a href="{% url 'dispatch:dashboard' %}" class="btn btn-outline-danger w-100">
+                                    <i class="fas fa-arrow-right me-2"></i>Accéder
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body text-center">
+                                <i class="fas fa-car-side fa-3x text-warning mb-3"></i>
+                                <h4>Chauffeur</h4>
+                                <p>Consultez vos missions et enregistrez les kilométrages</p>
+                                <a href="{% url 'chauffeur:dashboard' %}" class="btn btn-outline-warning w-100">
+                                    <i class="fas fa-arrow-right me-2"></i>Accéder
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body text-center">
+                                <i class="fas fa-shield-alt fa-3x text-primary mb-3"></i>
+                                <h4>Sécurité</h4>
+                                <p>Effectuez les check-lists de sécurité des véhicules</p>
+                                <a href="{% url 'securite:dashboard' %}" class="btn btn-outline-primary w-100">
+                                    <i class="fas fa-arrow-right me-2"></i>Accéder
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
