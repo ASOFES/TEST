@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import os
 import django
 
@@ -5,33 +6,30 @@ import django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'gestion_vehicules.settings')
 django.setup()
 
-from core.models import Utilisateur
+# Importer le modèle utilisateur
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
-def check_admin_user():
-    try:
-        admin_user = Utilisateur.objects.get(username='admin')
-        print(f"Détails de l'utilisateur admin:")
-        print(f"Nom d'utilisateur: {admin_user.username}")
-        print(f"Prénom: {admin_user.first_name}")
-        print(f"Nom: {admin_user.last_name}")
-        print(f"Email: {admin_user.email}")
-        print(f"Rôle: {admin_user.role} ({admin_user.get_role_display()})")
-        print(f"Est superutilisateur: {admin_user.is_superuser}")
-        print(f"Est membre du staff: {admin_user.is_staff}")
-        
-        # Vérifier si l'utilisateur a le rôle d'administrateur
-        if admin_user.role != 'admin' or not admin_user.is_superuser:
-            print("\nL'utilisateur existe mais n'a pas tous les privilèges d'administrateur.")
-            print("Mise à jour des privilèges...")
-            
-            admin_user.role = 'admin'
-            admin_user.is_superuser = True
-            admin_user.is_staff = True
-            admin_user.save()
-            
-            print("Privilèges mis à jour avec succès!")
-    except Utilisateur.DoesNotExist:
-        print("L'utilisateur admin n'existe pas.")
+# Afficher des informations sur le serveur
+print("=== Informations sur l'application ASOFES ===\n")
+print("URL de l'application: https://asofes.onrender.com/")
+print("URL de l'administration: https://asofes.onrender.com/admin/")
 
-if __name__ == '__main__':
-    check_admin_user()
+# Vérifier l'existence des superutilisateurs
+superusers = User.objects.filter(is_superuser=True)
+
+if superusers.exists():
+    print("\n=== Superutilisateurs existants ===")
+    for user in superusers:
+        print(f"Nom d'utilisateur: {user.username}")
+        print(f"Email: {user.email}")
+        print("-----------------------------------")
+    print(f"\nNombre total de superutilisateurs: {superusers.count()}")
+else:
+    print("\nAucun superutilisateur n'existe encore.")
+    print("Exécutez le script create_admin.py pour en créer un.")
+
+print("\n=== Instructions ===")
+print("1. Pour créer un superutilisateur, exécutez: python create_admin.py")
+print("2. Pour accéder à l'administration, visitez: https://asofes.onrender.com/admin/")
+print("3. Connectez-vous avec le nom d'utilisateur et mot de passe créés")

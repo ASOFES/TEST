@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import os
 import django
 
@@ -5,33 +6,26 @@ import django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'gestion_vehicules.settings')
 django.setup()
 
-from core.models import Utilisateur
+# Importer le modèle utilisateur (peut être personnalisé dans ton projet)
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
-def create_admin_user():
-    # Vérifier si l'utilisateur admin existe déjà
-    if Utilisateur.objects.filter(username='admin').exists():
-        print("L'utilisateur admin existe déjà.")
-        return
-    
-    # Créer un nouvel utilisateur admin
-    admin_user = Utilisateur.objects.create_user(
-        username='admin',
-        email='admin@mamo.com',
-        password='Admin@123',
-        first_name='Admin',
-        last_name='MAMO',
-        role='admin'
-    )
-    
-    # Donner les permissions de superuser
-    admin_user.is_staff = True
-    admin_user.is_superuser = True
-    admin_user.save()
-    
-    print("Utilisateur admin créé avec succès!")
-    print("Nom d'utilisateur: admin")
-    print("Mot de passe: Admin@123")
-    print("Rôle: Administrateur")
+# Définir les informations du superutilisateur
+username = 'admin'
+email = 'admin@asofes.com'
+password = 'AdminAsofes2024'  # Remplace par un mot de passe sécurisé en production
 
-if __name__ == '__main__':
-    create_admin_user()
+# Vérifie si un superutilisateur existe déjà
+if not User.objects.filter(username=username).exists():
+    print(f"Création du superutilisateur {username}...")
+    User.objects.create_superuser(username, email, password)
+    print(f"Superutilisateur {username} créé avec succès!")
+    print(f"Email: {email}")
+    print(f"Mot de passe: {password}")
+    print("Conservez ces informations dans un endroit sûr.")
+else:
+    print(f"Un utilisateur avec le nom {username} existe déjà.")
+    print("Aucune modification n'a été effectuée.")
+
+print("\nVous pouvez maintenant vous connecter à l'interface d'administration:")
+print("https://asofes.onrender.com/admin/")
