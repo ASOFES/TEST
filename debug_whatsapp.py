@@ -1,6 +1,5 @@
 import os
-import requests
-import json
+from twilio.rest import Client
 from django.conf import settings
 import django
 
@@ -9,58 +8,52 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'gestion_vehicules.settings')
 django.setup()
 
 def test_whatsapp():
-    """Test l'envoi de message WhatsApp via CEQUENS"""
-    print("=== DIAGNOSTIC CEQUENS WHATSAPP ===")
-    print(f"CEQUENS_API_KEY: {settings.CEQUENS_API_KEY}")
-    print(f"CEQUENS_API_SECRET: {'*' * len(settings.CEQUENS_API_SECRET)} (masqué)")
-    print(f"CEQUENS_WHATSAPP_NUMBER: {settings.CEQUENS_WHATSAPP_NUMBER}")
+    """Test l'envoi de message WhatsApp via Twilio"""
+    print("=== DIAGNOSTIC TWILIO WHATSAPP ===")
+    print(f"TWILIO_ACCOUNT_SID: {settings.TWILIO_ACCOUNT_SID}")
+    print(f"TWILIO_AUTH_TOKEN: {'*' * len(settings.TWILIO_AUTH_TOKEN)} (masqué)")
+    print(f"TWILIO_WHATSAPP_NUMBER: {settings.TWILIO_WHATSAPP_NUMBER}")
     
     # Numéro de test (votre propre numéro)
     test_number = "+243995178105"  # Votre numéro de téléphone personnel
     
-    print(f"Numéro d'envoi (WhatsApp): {settings.CEQUENS_WHATSAPP_NUMBER}")
+    print(f"Numéro d'envoi (WhatsApp): {settings.TWILIO_WHATSAPP_NUMBER}")
     print(f"Numéro de réception: {test_number}")
     
     try:
-        # Préparer la requête pour l'API CEQUENS WhatsApp
-        url = "https://apis.cequens.com/conversation/wab/v1/messages/"
+        # Initialiser le client Twilio
+        client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+        print("Client Twilio initialisé avec succès.")
         
-        headers = {
-            "accept": "application/json",
-            "content-type": "application/json",
-            "authorization": f"Bearer {settings.CEQUENS_API_KEY}"
-        }
+        # Formater les numéros pour WhatsApp
+        from_whatsapp = f"whatsapp:{settings.TWILIO_WHATSAPP_NUMBER}"
+        to_whatsapp = f"whatsapp:{test_number}"
         
-        # Message de test
-        message = "Ceci est un message de test depuis l'application de gestion de flotte via CEQUENS WhatsApp Business API."
+        # Message template avec instructions pour l'activation
+        message = """Ceci est un message de test depuis l'application de gestion de flotte.
+
+Pour recevoir des messages WhatsApp de notre application, vous devez d'abord:
+1. Enregistrer ce numéro dans vos contacts: +14155238886
+2. Envoyer "join bright-king" via WhatsApp à ce numéro.
+
+Après cela, vous pourrez recevoir nos notifications par WhatsApp."""
         
-        payload = {
-            "type": "text",
-            "recipient_type": "individual",
-            "to": test_number.replace("+", ""),  # Format sans le +
-            "from": settings.CEQUENS_WHATSAPP_NUMBER.replace("+", ""),  # Format sans le +
-            "text": {
-                "body": message
-            }
-        }
+        # Envoyer un message WhatsApp de test
+        print(f"Tentative d'envoi d'un message WhatsApp à {to_whatsapp}...")
+        message = client.messages.create(
+            body=message,
+            from_=from_whatsapp,
+            to=to_whatsapp
+        )
         
-        print("Client CEQUENS WhatsApp initialisé avec succès.")
-        print(f"Tentative d'envoi d'un message WhatsApp à {test_number}...")
-        
-        # Envoyer la requête
-        response = requests.post(url, headers=headers, json=payload)
-        
-        # Vérifier la réponse
-        if response.status_code == 200 or response.status_code == 201:
-            result = response.json()
-            print(f"Message WhatsApp envoyé avec succès! ID du message: {result.get('messages', [{}])[0].get('id', 'N/A')}")
-            print(f"Réponse complète: {json.dumps(result, indent=2)}")
-            return True
-        else:
-            print(f"ERREUR: Statut {response.status_code}")
-            print(f"Détails: {response.text}")
-            return False
-            
+        print(f"Message WhatsApp envoyé avec succès! SID du message: {message.sid}")
+        print("\n===== IMPORTANT =====")
+        print("Pour recevoir les messages WhatsApp dans le sandbox Twilio:")
+        print("1. Enregistrez le numéro +14155238886 dans vos contacts")
+        print("2. Envoyez le message 'join bright-king' à ce numéro via WhatsApp")
+        print("3. Une fois inscrit, vous recevrez les notifications pendant 72 heures")
+        print("4. Après 72 heures, vous devrez renvoyer le message 'join bright-king'")
+        return True
     except Exception as e:
         print(f"ERREUR: {str(e)}")
         return False

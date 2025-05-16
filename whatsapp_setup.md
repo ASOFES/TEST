@@ -1,73 +1,60 @@
-# Configuration de WhatsApp Business API avec CEQUENS
+# Configuration de WhatsApp pour les notifications
 
-Ce document explique comment configurer WhatsApp Business API via CEQUENS pour votre application de gestion de flotte.
+Ce guide vous explique comment configurer les notifications WhatsApp pour votre application de gestion de flotte via Twilio.
 
-## Prérequis
+## 1. Prérequis
 
-1. Un compte CEQUENS actif (https://www.cequens.com/)
-2. Un numéro de téléphone WhatsApp Business approuvé par CEQUENS
-3. Une clé API CEQUENS valide
+Avant de commencer, assurez-vous d'avoir:
+- Un compte Twilio actif
+- Le sandbox WhatsApp de Twilio activé
+- Votre numéro de téléphone Twilio WhatsApp (+14155238886)
 
-## Étapes de configuration
+## 2. Configuration du Sandbox WhatsApp Twilio
 
-### 1. Créer un compte CEQUENS
+WhatsApp nécessite un processus d'approbation officiel pour l'utilisation d'un numéro d'entreprise. Cependant, Twilio offre un "sandbox" pour tester l'intégration WhatsApp:
 
-- Rendez-vous sur [CEQUENS](https://www.cequens.com/)
-- Cliquez sur "Book demo" pour demander une démonstration
-- Suivez le processus d'inscription et de création de compte
+1. Connectez-vous à votre [compte Twilio](https://www.twilio.com/console)
+2. Allez dans la section "Messaging" puis "Try it out" > "Send a WhatsApp message"
+3. Suivez les instructions pour activer le sandbox
+4. Notez le **mot-code** pour rejoindre votre sandbox (par exemple "join remarkable")
 
-### 2. Obtenir vos identifiants API
+## 3. Inscription des utilisateurs au service WhatsApp
 
-- Connectez-vous à votre tableau de bord CEQUENS
-- Accédez à la section API Keys ou Developer
-- Notez votre API Key et API Secret
+Pour qu'un utilisateur puisse recevoir des messages WhatsApp via votre application:
 
-### 3. Configurer votre numéro WhatsApp Business
+1. L'utilisateur doit enregistrer le numéro WhatsApp Twilio (+14155238886) dans ses contacts
+2. L'utilisateur doit envoyer exactement le message "join [mot-code]" à ce numéro
+   - Par exemple: "join remarkable" (remplacez "remarkable" par votre mot-code)
+3. Une fois cette opération effectuée, l'utilisateur est inscrit et peut recevoir des messages pendant 72 heures
+4. Après 72 heures sans interaction, l'utilisateur devra de nouveau envoyer un message à votre numéro pour réactiver le service
 
-- Dans votre tableau de bord CEQUENS, accédez à la section WhatsApp Business
-- Suivez les étapes pour vérifier et configurer votre numéro WhatsApp Business
-- Créez des modèles de messages pour les notifications importantes
+## 4. Test de l'envoi de messages WhatsApp
 
-### 4. Configuration dans l'application
+Pour tester si tout fonctionne correctement:
 
-Exécutez le script de configuration CEQUENS pour mettre à jour les paramètres dans votre application:
+1. Exécutez le script de test: `python debug_whatsapp.py`
+2. Ce script enverra un message de test au numéro spécifié
+3. Vérifiez que vous recevez bien le message sur votre téléphone
 
-```bash
-python cequens_setup.py
-```
+## 5. Limites du sandbox WhatsApp
 
-Ou mettez à jour manuellement les variables suivantes dans `gestion_vehicules/settings.py`:
+Le sandbox WhatsApp de Twilio a quelques limitations:
+- Les utilisateurs doivent s'inscrire manuellement
+- La session expire après 72 heures d'inactivité
+- Vous ne pouvez envoyer des messages qu'aux numéros qui ont rejoint votre sandbox
+- Les modèles de messages sont limités
 
-```python
-# CEQUENS configuration
-CEQUENS_API_KEY = 'votre_api_key'
-CEQUENS_API_SECRET = 'votre_api_secret'
-CEQUENS_SENDER_ID = 'votre_sender_id'
-CEQUENS_WHATSAPP_NUMBER = 'votre_numero_whatsapp'
-MESSAGING_PROVIDER = 'CEQUENS'
-```
+## 6. Passage à une solution WhatsApp Business (pour la production)
 
-### 5. Tester l'envoi de messages
+Pour une utilisation en production, vous devrez:
+1. Demander l'approbation de WhatsApp pour utiliser l'API Business
+2. Créer et faire approuver des modèles de messages
+3. Configurer un numéro WhatsApp Business via Twilio
 
-Pour tester l'envoi de messages WhatsApp:
+## 7. Dépannage
 
-```bash
-python debug_whatsapp.py
-```
-
-## Modèles de messages WhatsApp
-
-Pour envoyer des messages WhatsApp via l'API CEQUENS, vous devez d'abord créer et faire approuver des modèles de messages pour chaque type de notification:
-
-1. **Notification de mission**: Pour informer les chauffeurs des nouvelles missions
-2. **Rappel de maintenance**: Pour rappeler les entretiens programmés
-3. **Alerte de carburant**: Pour signaler les niveaux bas de carburant
-4. **Confirmation de réservation**: Pour confirmer les réservations de véhicules
-
-## Support
-
-En cas de problème avec l'intégration CEQUENS:
-
-- Consultez la documentation officielle: [CEQUENS Developer Hub](https://www.cequens.com/knowledgehub)
-- Contactez le support CEQUENS: hello@cequens.com
-- Vérifiez les journaux d'erreur de l'application 
+Si les messages ne sont pas reçus:
+- Vérifiez que l'utilisateur a bien envoyé le message "join [mot-code]"
+- Vérifiez que la session n'a pas expiré (72 heures)
+- Vérifiez que le numéro de téléphone est au format E.164 (+243XXXXXXXXX)
+- Consultez les journaux de l'application pour voir les erreurs éventuelles 
