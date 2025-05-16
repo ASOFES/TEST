@@ -29,6 +29,17 @@
                         {% endfor %}
                     {% endif %}
                     
+                    <div class="d-flex justify-content-end mb-3">
+                        <div class="btn-group">
+                            <a href="{% url 'ravitaillement:exporter_ravitaillement_pdf' ravitaillement.id %}" class="btn btn-danger btn-sm">
+                                <i class="fas fa-file-pdf me-1"></i>Exporter en PDF
+                            </a>
+                            <a href="{% url 'ravitaillement:exporter_ravitaillement_excel' ravitaillement.id %}" class="btn btn-success btn-sm">
+                                <i class="fas fa-file-excel me-1"></i>Exporter en Excel
+                            </a>
+                        </div>
+                    </div>
+                    
                     <div class="row mb-4">
                         <div class="col-md-6">
                             <div class="card h-100 border-0 shadow-sm">
@@ -74,16 +85,20 @@
                                             <td>{{ ravitaillement.date_ravitaillement|date:"d/m/Y H:i" }}</td>
                                         </tr>
                                         <tr>
+                                            <th>Station :</th>
+                                            <td>{{ ravitaillement.nom_station|default:"Non spécifiée" }}</td>
+                                        </tr>
+                                        <tr>
                                             <th>Quantité :</th>
                                             <td>{{ ravitaillement.litres }} litres</td>
                                         </tr>
                                         <tr>
                                             <th>Prix unitaire :</th>
-                                            <td>{{ ravitaillement.cout_unitaire }} €/L</td>
+                                            <td>{{ ravitaillement.cout_unitaire }} $/L</td>
                                         </tr>
                                         <tr>
                                             <th>Coût total :</th>
-                                            <td>{{ ravitaillement.cout_total }} €</td>
+                                            <td>{{ ravitaillement.cout_total }} $</td>
                                         </tr>
                                         <tr>
                                             <th>Consommation moyenne :</th>
@@ -110,6 +125,21 @@
                                 </div>
                                 <div class="card-body">
                                     <p class="mb-0">{{ ravitaillement.commentaires|linebreaks }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if ravitaillement.image %}
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0"><i class="fas fa-image me-2"></i>Photo du reçu</h5>
+                                </div>
+                                <div class="card-body text-center">
+                                    <img src="{{ ravitaillement.image.url }}" alt="Photo du reçu" class="img-fluid" style="max-height: 400px;">
                                 </div>
                             </div>
                         </div>

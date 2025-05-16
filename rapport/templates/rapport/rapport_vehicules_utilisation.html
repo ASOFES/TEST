@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Titre de la page -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">{{ title }}</h1>
+        
+        <!-- Boutons d'exportation -->
+        <div class="btn-group">
+            <a href="{% url 'rapport:dashboard' %}" class="btn btn-outline-secondary btn-sm me-2">
+                <i class="fas fa-arrow-left me-1"></i>Retour au tableau de bord
+            </a>
+            <a href="{% url 'rapport:generer_rapport' 'vehicules_utilisation' %}?format=pdf{% if date_debut %}&date_debut={{ date_debut }}{% endif %}{% if date_fin %}&date_fin={{ date_fin }}{% endif %}" class="btn btn-primary btn-sm">
+                <i class="fas fa-file-pdf fa-sm text-white-50"></i> Exporter en PDF
+            </a>
+            <a href="{% url 'rapport:generer_rapport' 'vehicules_utilisation' %}?format=excel{% if date_debut %}&date_debut={{ date_debut }}{% endif %}{% if date_fin %}&date_fin={{ date_fin }}{% endif %}" class="btn btn-success btn-sm ms-2">
+                <i class="fas fa-file-excel fa-sm text-white-50"></i> Exporter en Excel
+            </a>
+        </div>
+    </div>
+
+    <!-- Formulaire de filtres -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Filtres</h6>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row">
+                <!-- Filtre par date de début -->
+                <div class="col-md-4 mb-3">
+                    <label for="date_debut">Date de début</label>
+                    <input type="date" class="form-control" id="date_debut" name="date_debut" value="{{ date_debut }}">
+                </div>
+                
+                <!-- Filtre par date de fin -->
+                <div class="col-md-4 mb-3">
+                    <label for="date_fin">Date de fin</label>
+                    <input type="date" class="form-control" id="date_fin" name="date_fin" value="{{ date_fin }}">
+                </div>
+                
+                <!-- Bouton de filtrage -->
+                <div class="col-md-4 mb-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-filter me-1"></i>Filtrer
+                    </button>
+                    <a href="{% url 'rapport:vehicules_utilisation' %}" class="btn btn-secondary ms-2">
+                        <i class="fas fa-undo me-1"></i>Réinitialiser
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tableau des statistiques des véhicules -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">Statistiques d'utilisation des véhicules</h6>
+            <div>
+                <span class="text-muted">{{ vehicules_stats.paginator.count }} véhicule(s) trouvé(s)</span>
+                <span class="text-muted ms-3">Distance totale: {{ total_distance|floatformat:2 }} km</span>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Immatriculation</th>
+                            <th>Marque/Modèle</th>
+                            <th>Nombre de courses</th>
+                            <th>Distance totale (km)</th>
+                            <th>Kilométrage actuel</th>
+                            <th>Consommation moyenne (L/100km)</th>
+                            <th>Dernière utilisation</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for stat in vehicules_stats %}
+                            <tr>
+                                <td>{{ stat.immatriculation }}</td>
+                                <td>{{ stat.marque }} {{ stat.modele }}</td>
+                                <td>{{ stat.nombre_courses }}</td>
+                                <td>{{ stat.distance_totale|floatformat:2 }}</td>
+                                <td>{{ stat.kilometrage_actuel }}</td>
+                                <td>
+                                    {% if stat.consommation_moyenne %}
+                                        {{ stat.consommation_moyenne|floatformat:2 }}
+                                    {% else %}
+                                        Non disponible
+                                    {% endif %}
+                                </td>
+                                <td>{{ stat.derniere_utilisation|date:"d/m/Y H:i" }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center">Aucune donnée disponible pour cette période</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if vehicules_stats.paginator.num_pages > 1 %}
+            <div class="d-flex justify-content-center mt-4">
+                <nav aria-label="Navigation des pages">
+                    <ul class="pagination">
+                        {% if vehicules_stats.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page=1" aria-label="Première">
+                                    <span aria-hidden="true">&laquo;&laquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ vehicules_stats.previous_page_number }}" aria-label="Précédente">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" aria-label="Première">
+                                    <span aria-hidden="true">&laquo;&laquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" aria-label="Précédente">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for i in vehicules_stats.paginator.page_range %}
+                            {% if vehicules_stats.number == i %}
+                                <li class="page-item active"><a class="page-link" href="#">{{ i }}</a></li>
+                            {% elif i > vehicules_stats.number|add:'-3' and i < vehicules_stats.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ i }}">{{ i }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if vehicules_stats.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ vehicules_stats.next_page_number }}" aria-label="Suivante">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ vehicules_stats.paginator.num_pages }}" aria-label="Dernière">
+                                    <span aria-hidden="true">&raquo;&raquo;</span>
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" aria-label="Suivante">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" aria-label="Dernière">
+                                    <span aria-hidden="true">&raquo;&raquo;</span>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Nous n'utilisons plus DataTables car nous avons notre propre pagination
+</script>
+{% endblock %} 

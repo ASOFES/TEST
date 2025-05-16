@@ -11,6 +11,12 @@
                 <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="fas fa-tools me-2"></i>Détails de l'entretien</h5>
                     <div>
+                        <a href="{% url 'entretien:exporter_entretien_pdf' entretien.id %}" class="btn btn-danger btn-sm me-2" target="_blank">
+                            <i class="fas fa-file-pdf me-1"></i>PDF
+                        </a>
+                        <a href="{% url 'entretien:exporter_entretien_excel' entretien.id %}" class="btn btn-success btn-sm me-2">
+                            <i class="fas fa-file-excel me-1"></i>Excel
+                        </a>
                         <a href="{% url 'entretien:liste_entretiens' %}" class="btn btn-outline-light btn-sm me-2">
                             <i class="fas fa-list me-1"></i>Liste
                         </a>
@@ -71,7 +77,7 @@
                                         </tr>
                                         <tr>
                                             <th>Coût :</th>
-                                            <td>{{ entretien.cout }} €</td>
+                                            <td>{{ entretien.cout }} $</td>
                                         </tr>
                                         <tr>
                                             <th>Statut :</th>
@@ -103,6 +109,30 @@
                                     <h6 class="fw-bold">Motif de l'entretien :</h6>
                                     <p class="mb-4">{{ entretien.motif|linebreaks }}</p>
                                     
+                                    {% if entretien.piece_justificative %}
+                                    <h6 class="fw-bold">Pièce justificative :</h6>
+                                    <div class="mb-4">
+                                        <a href="{{ entretien.piece_justificative.url }}" target="_blank" class="btn btn-outline-primary">
+                                            <i class="fas fa-file-alt me-2"></i>Voir le document
+                                        </a>
+                                        {% if entretien.piece_justificative.name|lower|slice:"-4:" == ".pdf" %}
+                                            <span class="badge bg-danger ms-2">PDF</span>
+                                        {% elif entretien.piece_justificative.name|lower|slice:"-4:" == ".jpg" or entretien.piece_justificative.name|lower|slice:"-5:" == ".jpeg" %}
+                                            <span class="badge bg-primary ms-2">Image JPG</span>
+                                            <div class="mt-3">
+                                                <img src="{{ entretien.piece_justificative.url }}" class="img-fluid img-thumbnail" style="max-height: 300px;" alt="Pièce justificative">
+                                            </div>
+                                        {% elif entretien.piece_justificative.name|lower|slice:"-4:" == ".png" %}
+                                            <span class="badge bg-primary ms-2">Image PNG</span>
+                                            <div class="mt-3">
+                                                <img src="{{ entretien.piece_justificative.url }}" class="img-fluid img-thumbnail" style="max-height: 300px;" alt="Pièce justificative">
+                                            </div>
+                                        {% else %}
+                                            <span class="badge bg-secondary ms-2">{{ entretien.piece_justificative.name|slice:"-4:" }}</span>
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
+                                    
                                     {% if entretien.commentaires %}
                                     <h6 class="fw-bold">Commentaires additionnels :</h6>
                                     <p class="mb-0">{{ entretien.commentaires|linebreaks }}</p>
@@ -126,6 +156,12 @@
                             <i class="fas fa-arrow-left me-2"></i>Retour à la liste
                         </a>
                         <div>
+                            <a href="{% url 'entretien:exporter_entretien_pdf' entretien.id %}" class="btn btn-danger me-2" target="_blank">
+                                <i class="fas fa-file-pdf me-2"></i>Exporter PDF
+                            </a>
+                            <a href="{% url 'entretien:exporter_entretien_excel' entretien.id %}" class="btn btn-success me-2">
+                                <i class="fas fa-file-excel me-2"></i>Exporter Excel
+                            </a>
                             <a href="{% url 'entretien:modifier_entretien' entretien.id %}" class="btn btn-warning me-2">
                                 <i class="fas fa-edit me-2"></i>Modifier
                             </a>

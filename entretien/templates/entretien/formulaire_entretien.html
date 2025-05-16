@@ -32,7 +32,7 @@
                         {% endfor %}
                     {% endif %}
                     
-                    <form method="post" novalidate>
+                    <form method="post" novalidate enctype="multipart/form-data">
                         {% csrf_token %}
                         
                         <div class="row mb-3">
@@ -43,6 +43,17 @@
                                     {% if form.vehicule.errors %}
                                         <div class="invalid-feedback d-block">
                                             {{ form.vehicule.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.kilometrage.id_for_label }}" class="form-label">{{ form.kilometrage.label }}*</label>
+                                    {{ form.kilometrage }}
+                                    <small class="text-muted">Le kilométrage est automatiquement rempli en fonction du véhicule sélectionné.</small>
+                                    {% if form.kilometrage.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.kilometrage.errors }}
                                         </div>
                                     {% endif %}
                                 </div>
@@ -102,6 +113,27 @@
                         </div>
                         
                         <div class="form-group mb-3">
+                            <label for="{{ form.piece_justificative.id_for_label }}" class="form-label">{{ form.piece_justificative.label }}</label>
+                            {{ form.piece_justificative }}
+                            <small class="text-muted">Téléchargez une facture, un reçu ou tout autre document justificatif (formats acceptés: PDF, JPG, PNG)</small>
+                            {% if form.piece_justificative.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.piece_justificative.errors }}
+                                </div>
+                            {% endif %}
+                            {% if entretien and entretien.piece_justificative %}
+                                <div class="mt-2">
+                                    <p class="mb-1">Document actuel : 
+                                        <a href="{{ entretien.piece_justificative.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-file me-1"></i>{{ entretien.piece_justificative.name|slice:"9:" }}
+                                        </a>
+                                    </p>
+                                    <small class="text-muted">Télécharger un nouveau document remplacera celui-ci</small>
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group mb-3">
                             <label for="{{ form.commentaires.id_for_label }}" class="form-label">{{ form.commentaires.label }}</label>
                             {{ form.commentaires }}
                             {% if form.commentaires.errors %}
@@ -135,6 +167,71 @@
             $('#id_vehicule, #id_statut').select2({
                 theme: 'bootstrap-5',
                 width: '100%'
+            });
+        }
+        
+        // Récupérer le kilométrage automatiquement lorsqu'un véhicule est sélectionné
+        const vehiculeSelect = document.getElementById('id_vehicule');
+        const kilometrageInput = document.getElementById('id_kilometrage');
+        
+        if (vehiculeSelect && kilometrageInput) {
+            console.log('Initialisation du formulaire d\'entretien');
+            
+            vehiculeSelect.addEventListener('change', function() {
+                const vehiculeId = this.value;
+                console.log('Véhicule sélectionné:', vehiculeId);
+                
+                if (vehiculeId) {
+                    // Afficher un indicateur de chargement
+                    kilometrageInput.value = 'Chargement...';
+                    kilometrageInput.removeAttribute('readonly'); // Permettre la modification pendant le chargement
+                    
+                    // URL de l'API
+                    const apiUrl = `{% url 'entretien:get_vehicule_kilometrage' %}?vehicule_id=${vehiculeId}`;
+                    console.log('Appel API:', apiUrl);
+                    
+                    // Effectuer la requête AJAX pour récupérer le kilométrage
+                    fetch(apiUrl)
+                        .then(response => {
+                            console.log('Statut de la réponse:', response.status);
+                            return response.json();
+                        })
+                        .then(data => {
+                            console.log('Données reçues:', data);
+                            if (data.success) {
+                                kilometrageInput.value = data.kilometrage;
+                                // Afficher une notification de succès
+                                console.log(`Kilométrage récupéré: ${data.kilometrage} pour le véhicule ${data.immatriculation}`);
+                            } else {
+                                console.error('Erreur API:', data.error);
+                                kilometrageInput.value = '0';
+                                alert('Erreur lors de la récupération du kilométrage: ' + data.error);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Erreur fetch:', error);
+                            kilometrageInput.value = '0';
+                            alert('Erreur lors de la communication avec le serveur. Veuillez réessayer.');
+                        })
+                        .finally(() => {
+                            // Toujours permettre la modification du kilométrage
+                            kilometrageInput.removeAttribute('readonly');
+                        });
+                } else {
+                    kilometrageInput.value = '';
+                }
+            });
+            
+            // Déclencher l'événement change si un véhicule est déjà sélectionné (lors de l'édition)
+            if (vehiculeSelect.value) {
+                console.log('Véhicule déjà sélectionné, déclenchement de l\'événement change');
+                const event = new Event('change');
+                vehiculeSelect.dispatchEvent(event);
+            }
+        } else {
+            console.error('Éléments du formulaire non trouvés:', {
+                vehiculeSelect: !!vehiculeSelect,
+                kilometrageInput: !!kilometrageInput
             });
         }
     });

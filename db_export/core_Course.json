@@ -1,0 +1,65 @@
+[
+{
+    "model": "core.course",
+    "pk": 1,
+    "fields": {
+        "demandeur": 1,
+        "point_embarquement": "kibati",
+        "destination": "KOLWEZI",
+        "motif": "paiement banque",
+        "date_demande": "2025-05-10T17:15:55.324Z",
+        "chauffeur": 3,
+        "vehicule": 1,
+        "dispatcher": 4,
+        "date_validation": "2025-05-11T10:38:40.594Z",
+        "statut": "terminee",
+        "kilometrage_depart": 5000,
+        "kilometrage_fin": 6000,
+        "date_depart": "2025-05-11T14:46:12.729Z",
+        "date_fin": "2025-05-11T14:47:00.344Z",
+        "distance_parcourue": 1000
+    }
+},
+{
+    "model": "core.course",
+    "pk": 2,
+    "fields": {
+        "demandeur": 2,
+        "point_embarquement": "KIBATI",
+        "destination": "VILLE",
+        "motif": "PAIEMENT DE PIECES ELECTRIQUES",
+        "date_demande": "2025-05-13T06:13:27.943Z",
+        "chauffeur": 3,
+        "vehicule": 2,
+        "dispatcher": 4,
+        "date_validation": "2025-05-13T06:20:10.362Z",
+        "statut": "terminee",
+        "kilometrage_depart": 1500,
+        "kilometrage_fin": 2000,
+        "date_depart": "2025-05-13T06:25:38.852Z",
+        "date_fin": "2025-05-13T06:27:54.216Z",
+        "distance_parcourue": 500
+    }
+},
+{
+    "model": "core.course",
+    "pk": 3,
+    "fields": {
+        "demandeur": 2,
+        "point_embarquement": "KIBATI",
+        "destination": "KOLWEZI",
+        "motif": "depot marker",
+        "date_demande": "2025-05-13T06:50:36.905Z",
+        "chauffeur": 3,
+        "vehicule": 2,
+        "dispatcher": 4,
+        "date_validation": "2025-05-13T06:53:20.798Z",
+        "statut": "terminee",
+        "kilometrage_depart": 2000,
+        "kilometrage_fin": 2500,
+        "date_depart": "2025-05-13T06:55:58.544Z",
+        "date_fin": "2025-05-13T06:57:42.003Z",
+        "distance_parcourue": 500
+    }
+}
+]

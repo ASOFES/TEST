@@ -11,6 +11,12 @@
                 <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                     <h5 class="mb-0"><i class="fas fa-tools me-2"></i>Liste des Entretiens</h5>
                     <div>
+                        <a href="{% url 'entretien:exporter_entretiens_pdf' %}{% if request.GET %}?{% for key, value in request.GET.items %}{% if not forloop.first %}&{% endif %}{{ key }}={{ value }}{% endfor %}{% endif %}" class="btn btn-danger btn-sm me-2" target="_blank">
+                            <i class="fas fa-file-pdf me-1"></i>Exporter PDF
+                        </a>
+                        <a href="{% url 'entretien:exporter_entretiens_excel' %}{% if request.GET %}?{% for key, value in request.GET.items %}{% if not forloop.first %}&{% endif %}{{ key }}={{ value }}{% endfor %}{% endif %}" class="btn btn-success btn-sm me-2">
+                            <i class="fas fa-file-excel me-1"></i>Exporter Excel
+                        </a>
                         <a href="{% url 'entretien:dashboard' %}" class="btn btn-outline-light btn-sm me-2">
                             <i class="fas fa-tachometer-alt me-1"></i>Tableau de bord
                         </a>
@@ -64,6 +70,26 @@
                                             <label for="date_fin" class="form-label">Date fin</label>
                                             <input type="date" name="date_fin" id="date_fin" class="form-control" value="{{ request.GET.date_fin }}">
                                         </div>
+                                        <div class="col-md-6">
+                                            <label for="recherche" class="form-label">Recherche</label>
+                                            <div class="input-group">
+                                                <input type="text" name="recherche" id="recherche" class="form-control" placeholder="Rechercher par motif, garage, immatriculation..." value="{{ request.GET.recherche }}">
+                                                <button type="submit" class="btn btn-primary">
+                                                    <i class="fas fa-search me-1"></i>Rechercher
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="tri" class="form-label">Trier par</label>
+                                            <select name="tri" id="tri" class="form-select" onchange="this.form.submit()">
+                                                <option value="-date_entretien" {% if tri_actuel == '-date_entretien' %}selected{% endif %}>Date (plus récent)</option>
+                                                <option value="date_entretien" {% if tri_actuel == 'date_entretien' %}selected{% endif %}>Date (plus ancien)</option>
+                                                <option value="vehicule__immatriculation" {% if tri_actuel == 'vehicule__immatriculation' %}selected{% endif %}>Véhicule (A-Z)</option>
+                                                <option value="-cout" {% if tri_actuel == '-cout' %}selected{% endif %}>Coût (décroissant)</option>
+                                                <option value="cout" {% if tri_actuel == 'cout' %}selected{% endif %}>Coût (croissant)</option>
+                                                <option value="garage" {% if tri_actuel == 'garage' %}selected{% endif %}>Garage (A-Z)</option>
+                                            </select>
+                                        </div>
                                         <div class="col-12 text-end">
                                             <button type="submit" class="btn btn-primary">
                                                 <i class="fas fa-filter me-1"></i>Filtrer
@@ -100,7 +126,7 @@
                                     <td>{{ entretien.garage }}</td>
                                     <td>{{ entretien.date_entretien|date:"d/m/Y" }}</td>
                                     <td>{{ entretien.motif|truncatechars:50 }}</td>
-                                    <td>{{ entretien.cout }} €</td>
+                                    <td>{{ entretien.cout }} $</td>
                                     <td>
                                         {% if entretien.statut == 'planifie' %}
                                             <span class="badge bg-info">{{ entretien.get_statut_display }}</span>
@@ -120,6 +146,12 @@
                                             <a href="{% url 'entretien:modifier_entretien' entretien.id %}" class="btn btn-sm btn-outline-warning" title="Modifier">
                                                 <i class="fas fa-edit"></i>
                                             </a>
+                                            <a href="{% url 'entretien:exporter_entretien_pdf' entretien.id %}" class="btn btn-sm btn-outline-danger" title="Exporter PDF" target="_blank">
+                                                <i class="fas fa-file-pdf"></i>
+                                            </a>
+                                            <a href="{% url 'entretien:exporter_entretien_excel' entretien.id %}" class="btn btn-sm btn-outline-success" title="Exporter Excel">
+                                                <i class="fas fa-file-excel"></i>
+                                            </a>
                                             <a href="{% url 'entretien:supprimer_entretien' entretien.id %}" class="btn btn-sm btn-outline-danger" title="Supprimer">
                                                 <i class="fas fa-trash"></i>
                                             </a>
@@ -130,6 +162,83 @@
                             </tbody>
                         </table>
                     </div>
+                    
+                    <!-- Pagination -->
+                    {% if entretiens.paginator.num_pages > 0 %}
+                    <div class="d-flex justify-content-center mt-4">
+                        <nav aria-label="Pagination des entretiens">
+                            <ul class="pagination">
+                                {% if entretiens.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=1{% if request.GET.vehicule %}&vehicule={{ request.GET.vehicule }}{% endif %}{% if request.GET.statut %}&statut={{ request.GET.statut }}{% endif %}{% if request.GET.date_debut %}&date_debut={{ request.GET.date_debut }}{% endif %}{% if request.GET.date_fin %}&date_fin={{ request.GET.date_fin }}{% endif %}{% if request.GET.recherche %}&recherche={{ request.GET.recherche }}{% endif %}{% if request.GET.tri %}&tri={{ request.GET.tri }}{% endif %}" aria-label="Première">
+                                            <span aria-hidden="true">&laquo;&laquo;</span>
+                                        </a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ entretiens.previous_page_number }}{% if request.GET.vehicule %}&vehicule={{ request.GET.vehicule }}{% endif %}{% if request.GET.statut %}&statut={{ request.GET.statut }}{% endif %}{% if request.GET.date_debut %}&date_debut={{ request.GET.date_debut }}{% endif %}{% if request.GET.date_fin %}&date_fin={{ request.GET.date_fin }}{% endif %}{% if request.GET.recherche %}&recherche={{ request.GET.recherche }}{% endif %}{% if request.GET.tri %}&tri={{ request.GET.tri }}{% endif %}" aria-label="Précédente">
+                                            <span aria-hidden="true">&laquo;</span>
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#" aria-label="Première">
+                                            <span aria-hidden="true">&laquo;&laquo;</span>
+                                        </a>
+                                    </li>
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#" aria-label="Précédente">
+                                            <span aria-hidden="true">&laquo;</span>
+                                        </a>
+                                    </li>
+                                {% endif %}
+                                
+                                {% for i in entretiens.paginator.page_range %}
+                                    {% if entretiens.number == i %}
+                                        <li class="page-item active" aria-current="page">
+                                            <span class="page-link">{{ i }}</span>
+                                        </li>
+                                    {% elif i > entretiens.number|add:'-3' and i < entretiens.number|add:'3' %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ i }}{% if request.GET.vehicule %}&vehicule={{ request.GET.vehicule }}{% endif %}{% if request.GET.statut %}&statut={{ request.GET.statut }}{% endif %}{% if request.GET.date_debut %}&date_debut={{ request.GET.date_debut }}{% endif %}{% if request.GET.date_fin %}&date_fin={{ request.GET.date_fin }}{% endif %}{% if request.GET.recherche %}&recherche={{ request.GET.recherche }}{% endif %}{% if request.GET.tri %}&tri={{ request.GET.tri }}{% endif %}">{{ i }}</a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if entretiens.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ entretiens.next_page_number }}{% if request.GET.vehicule %}&vehicule={{ request.GET.vehicule }}{% endif %}{% if request.GET.statut %}&statut={{ request.GET.statut }}{% endif %}{% if request.GET.date_debut %}&date_debut={{ request.GET.date_debut }}{% endif %}{% if request.GET.date_fin %}&date_fin={{ request.GET.date_fin }}{% endif %}{% if request.GET.recherche %}&recherche={{ request.GET.recherche }}{% endif %}{% if request.GET.tri %}&tri={{ request.GET.tri }}{% endif %}" aria-label="Suivante">
+                                            <span aria-hidden="true">&raquo;</span>
+                                        </a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ entretiens.paginator.num_pages }}{% if request.GET.vehicule %}&vehicule={{ request.GET.vehicule }}{% endif %}{% if request.GET.statut %}&statut={{ request.GET.statut }}{% endif %}{% if request.GET.date_debut %}&date_debut={{ request.GET.date_debut }}{% endif %}{% if request.GET.date_fin %}&date_fin={{ request.GET.date_fin }}{% endif %}{% if request.GET.recherche %}&recherche={{ request.GET.recherche }}{% endif %}{% if request.GET.tri %}&tri={{ request.GET.tri }}{% endif %}" aria-label="Dernière">
+                                            <span aria-hidden="true">&raquo;&raquo;</span>
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#" aria-label="Suivante">
+                                            <span aria-hidden="true">&raquo;</span>
+                                        </a>
+                                    </li>
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#" aria-label="Dernière">
+                                            <span aria-hidden="true">&raquo;&raquo;</span>
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                    
+                    <div class="text-center mt-2">
+                        <small class="text-muted">
+                            Page {{ entretiens.number }} sur {{ entretiens.paginator.num_pages }} 
+                            ({{ entretiens.paginator.count }} entretiens au total)
+                        </small>
+                    </div>
+                    {% endif %}
+                    
                     {% else %}
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle me-2"></i>Aucun entretien trouvé.
@@ -147,7 +256,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         // Initialiser les sélecteurs avec Select2 pour une meilleure expérience utilisateur
         if (typeof $.fn.select2 !== 'undefined') {
-            $('#vehicule, #statut').select2({
+            $('#vehicule, #statut, #tri').select2({
                 theme: 'bootstrap-5',
                 width: '100%'
             });

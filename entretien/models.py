@@ -1,6 +1,11 @@
 from django.db import models
 from core.models import Utilisateur, Vehicule, ActionTraceur
 
+def piece_justificative_path(instance, filename):
+    """Définit le chemin où seront stockées les pièces justificatives"""
+    # Format: entretien/vehicule_id/YYYYMMDD_filename
+    return f'entretien/{instance.vehicule.id}/{instance.date_entretien.strftime("%Y%m%d")}_{filename}'
+
 class Entretien(models.Model):
     """Modèle pour les entretiens de véhicules"""
     STATUS_CHOICES = (
@@ -16,6 +21,9 @@ class Entretien(models.Model):
     statut = models.CharField(max_length=20, choices=STATUS_CHOICES, default='planifie')
     motif = models.TextField()
     cout = models.DecimalField(max_digits=10, decimal_places=2)
+    kilometrage = models.PositiveIntegerField(default=0, help_text="Kilométrage du véhicule au moment de l'entretien")
+    piece_justificative = models.FileField(upload_to=piece_justificative_path, blank=True, null=True, 
+                                          help_text="Facture, reçu ou autre document justificatif (PDF, JPG, PNG)")
     createur = models.ForeignKey(Utilisateur, on_delete=models.CASCADE, related_name='entretiens_crees')
     date_creation = models.DateTimeField(auto_now_add=True)
     date_modification = models.DateTimeField(auto_now=True)

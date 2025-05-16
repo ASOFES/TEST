@@ -122,6 +122,82 @@
                         <a href="{% url 'vehicule_create' %}" class="alert-link">Ajouter un véhicule</a>
                     </div>
                     {% endif %}
+                    
+                    <!-- Pagination -->
+                    {% if vehicules.paginator.num_pages > 0 %}
+                    <div class="d-flex justify-content-center mt-4">
+                        <nav aria-label="Pagination des véhicules">
+                            <ul class="pagination">
+                                {% if vehicules.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=1" aria-label="Première">
+                                            <span aria-hidden="true">&laquo;&laquo;</span>
+                                        </a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ vehicules.previous_page_number }}" aria-label="Précédente">
+                                            <span aria-hidden="true">&laquo;</span>
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#" aria-label="Première">
+                                            <span aria-hidden="true">&laquo;&laquo;</span>
+                                        </a>
+                                    </li>
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#" aria-label="Précédente">
+                                            <span aria-hidden="true">&laquo;</span>
+                                        </a>
+                                    </li>
+                                {% endif %}
+                                
+                                {% for i in vehicules.paginator.page_range %}
+                                    {% if vehicules.number == i %}
+                                        <li class="page-item active" aria-current="page">
+                                            <span class="page-link">{{ i }}</span>
+                                        </li>
+                                    {% elif i > vehicules.number|add:'-3' and i < vehicules.number|add:'3' %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ i }}">{{ i }}</a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if vehicules.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ vehicules.next_page_number }}" aria-label="Suivante">
+                                            <span aria-hidden="true">&raquo;</span>
+                                        </a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ vehicules.paginator.num_pages }}" aria-label="Dernière">
+                                            <span aria-hidden="true">&raquo;&raquo;</span>
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#" aria-label="Suivante">
+                                            <span aria-hidden="true">&raquo;</span>
+                                        </a>
+                                    </li>
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#" aria-label="Dernière">
+                                            <span aria-hidden="true">&raquo;&raquo;</span>
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                    
+                    <div class="text-center mt-2">
+                        <small class="text-muted">
+                            Page {{ vehicules.number }} sur {{ vehicules.paginator.num_pages }} 
+                            ({{ vehicules.paginator.count }} véhicules au total)
+                        </small>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>

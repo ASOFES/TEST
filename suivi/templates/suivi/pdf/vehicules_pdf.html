@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Suivi des Véhicules</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .company-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        .info {
+            font-size: 10px;
+            margin-bottom: 20px;
+            text-align: right;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 10px;
+            padding: 10px 0;
+        }
+        .status-available {
+            color: green;
+            font-weight: bold;
+        }
+        .status-unavailable {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="company-name">ASOFES</div>
+        <div class="title">SUIVI DES VÉHICULES</div>
+        <div class="subtitle">Rapport généré le {{ date_generation|date:"d/m/Y à H:i" }}</div>
+    </div>
+    
+    <div class="info">
+        <p>Généré par: {{ user.first_name }} {{ user.last_name }}</p>
+        <p>Demandeur: {{ user.username }}</p>
+    </div>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Immatriculation</th>
+                <th>Marque/Modèle</th>
+                <th>Date Immatriculation</th>
+                <th>Distance Parcourue</th>
+                <th>Nombre d'Entretiens</th>
+                <th>Volume Carburant</th>
+                <th>Statut</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in vehicules_data %}
+            <tr>
+                <td>{{ item.vehicule.immatriculation }}</td>
+                <td>{{ item.vehicule.marque }} {{ item.vehicule.modele }}</td>
+                <td>
+                    {% if item.vehicule.date_immatriculation %}
+                        {{ item.vehicule.date_immatriculation|date:"d/m/Y" }}
+                    {% else %}
+                        Non renseignée
+                    {% endif %}
+                </td>
+                <td>{{ item.distance_totale }} km</td>
+                <td>{{ item.nombre_entretiens }}</td>
+                <td>{{ item.volume_carburant|floatformat:2 }} L</td>
+                <td>
+                    {% if item.vehicule.est_disponible %}
+                        <span class="status-available">Disponible</span>
+                    {% else %}
+                        <span class="status-unavailable">Indisponible</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <div class="footer">
+        <p>© {{ date_generation|date:"Y" }} - Système de Gestion des Véhicules</p>
+    </div>
+</body>
+</html> 

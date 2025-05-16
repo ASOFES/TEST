@@ -23,16 +23,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 # Nom : test1
-SECRET_KEY = 'django-insecure-e$=-1x-y8!d8%ku&kz0uq#ap!_6%r7e!r85p$z+-ujcu0ed$@7'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-e$=-1x-y8!d8%ku&kz0uq#ap!_6%r7e!r85p$z+-ujcu0ed$@7')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # Nom : DEBUG
 # Valeur : False (pour la production)
-DEBUG = False
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 # Nom : ALLOWED_HOSTS
-# Valeur : * 
-ALLOWED_HOSTS = ['*']
+# Valeur : domaines autorisés
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
 
 # Application definition
 
@@ -54,14 +54,19 @@ INSTALLED_APPS = [
     'ravitaillement',
     'rapport',
     'suivi',
+    'notifications',
+    'chat',
+    
+    # Applications tierces
+    'django_crontab',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Pour servir les fichiers statiques
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    # Temporairement désactivé pour résoudre les problèmes de connexion
-    # 'django.middleware.csrf.CsrfViewMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',  # Réactivé pour la sécurité
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -124,7 +129,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'fr-fr'
 
-TIME_ZONE = 'Africa/Kinshasa'
+TIME_ZONE = 'Africa/Lubumbashi'  # Lubumbashi est à UTC+2, 1 heure en avance par rapport à Kinshasa
 
 USE_I18N = True
 
@@ -159,6 +164,45 @@ LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
 # Configuration CSRF
-CSRF_COOKIE_SECURE = False  # Mettre à True en production avec HTTPS
-CSRF_COOKIE_HTTPONLY = False  # Permet l'accès au cookie via JavaScript
+CSRF_COOKIE_SECURE = not DEBUG  # True en production avec HTTPS
+CSRF_COOKIE_HTTPONLY = not DEBUG  # True en production
 CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000', 'http://localhost:8000', 'https://asofes.onrender.com']
+
+# Configuration email
+# Pour le développement uniquement (les emails sont affichés dans la console)
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# Configuration email avec Gmail
+# Pour utiliser Gmail, suivez ces étapes:
+# 1. Activez l'authentification à deux facteurs sur votre compte Google: https://myaccount.google.com/security
+# 2. Créez un mot de passe d'application: https://myaccount.google.com/apppasswords
+# 3. Utilisez ce mot de passe d'application ci-dessous (pas votre mot de passe Gmail habituel)
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'votre_email@gmail.com'  # Remplacez par votre adresse Gmail
+EMAIL_HOST_PASSWORD = 'votre_mot_de_passe_app'  # Remplacez par votre mot de passe d'application 
+DEFAULT_FROM_EMAIL = 'noreply@asofes.com'
+
+# Autre option: Configuration avec un service SMTP générique (comme SendGrid, Mailgun, etc.)
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.votreservice.com'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'votre_identifiant'
+# EMAIL_HOST_PASSWORD = 'votre_mot_de_passe'
+# DEFAULT_FROM_EMAIL = 'noreply@asofes.com'
+
+# Configuration Twilio (pour SMS et WhatsApp)
+TWILIO_ACCOUNT_SID = os.environ.get('TWILIO_ACCOUNT_SID', 'AC8cfd32a38305b8a2376b7c75680819f6')  # ID correct
+TWILIO_AUTH_TOKEN = os.environ.get('TWILIO_AUTH_TOKEN', '78a3b5d2a56a028962a3b6bd8ad1519d')  # Token correct
+# Numéro Twilio acheté
+TWILIO_PHONE_NUMBER = os.environ.get('TWILIO_PHONE_NUMBER', '+12295159640')  # Votre numéro Twilio
+TWILIO_WHATSAPP_NUMBER = os.environ.get('TWILIO_WHATSAPP_NUMBER', '+14155238886')  # Numéro Twilio WhatsApp
+
+# Configuration des tâches cron
+CRONJOBS = [
+    # Vérifier les expirations de documents tous les jours à 8h00
+    ('0 8 * * *', 'notifications.tasks.check_document_expirations'),
+]

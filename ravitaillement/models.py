@@ -5,6 +5,7 @@ class Ravitaillement(models.Model):
     """Modèle pour les ravitaillements de véhicules"""
     vehicule = models.ForeignKey(Vehicule, on_delete=models.CASCADE, related_name='ravitaillements')
     date_ravitaillement = models.DateTimeField(auto_now_add=True)  # On garde auto_now_add pour simplifier
+    nom_station = models.CharField(max_length=100, blank=True, null=True, verbose_name="Nom de la station")
     kilometrage_avant = models.PositiveIntegerField(default=0)
     kilometrage_apres = models.PositiveIntegerField(default=0)
     litres = models.DecimalField(max_digits=8, decimal_places=2, default=0.0)
@@ -12,6 +13,7 @@ class Ravitaillement(models.Model):
     cout_total = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
     createur = models.ForeignKey(Utilisateur, on_delete=models.CASCADE, related_name='ravitaillements_crees')
     commentaires = models.TextField(blank=True, null=True)
+    image = models.ImageField(upload_to='images_ravitaillements/', blank=True, null=True, verbose_name="Photo du reçu")
     
     def __str__(self):
         return f"Ravitaillement {self.vehicule.immatriculation} - {self.date_ravitaillement}"
@@ -28,7 +30,7 @@ class Ravitaillement(models.Model):
             ActionTraceur.objects.create(
                 utilisateur=self.createur,
                 action="Ravitaillement",
-                details=f"Véhicule: {self.vehicule.immatriculation}, Litres: {self.litres}, Coût: {self.cout_total}"
+                details=f"Véhicule: {self.vehicule.immatriculation}, Station: {self.nom_station or 'Non spécifiée'}, Litres: {self.litres}, Coût: {self.cout_total}"
             )
     
     @property

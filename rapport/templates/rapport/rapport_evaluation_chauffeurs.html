@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Titre de la page -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">{{ title }}</h1>
+        
+        <!-- Boutons d'exportation -->
+        <div class="btn-group">
+            <a href="{% url 'rapport:generer_rapport' 'evaluation_chauffeurs' %}?format=pdf{% if date_debut %}&date_debut={{ date_debut }}{% endif %}{% if date_fin %}&date_fin={{ date_fin }}{% endif %}{% if selected_chauffeur %}&chauffeur={{ selected_chauffeur }}{% endif %}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+                <i class="fas fa-file-pdf fa-sm text-white-50"></i> Exporter en PDF
+            </a>
+            <a href="{% url 'rapport:generer_rapport' 'evaluation_chauffeurs' %}?format=excel{% if date_debut %}&date_debut={{ date_debut }}{% endif %}{% if date_fin %}&date_fin={{ date_fin }}{% endif %}{% if selected_chauffeur %}&chauffeur={{ selected_chauffeur }}{% endif %}" class="d-none d-sm-inline-block btn btn-sm btn-success shadow-sm ml-2">
+                <i class="fas fa-file-excel fa-sm text-white-50"></i> Exporter en Excel
+            </a>
+        </div>
+    </div>
+
+    <!-- Formulaire de filtres -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Filtres</h6>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row">
+                <!-- Filtre par chauffeur -->
+                <div class="col-md-3 mb-3">
+                    <label for="chauffeur">Chauffeur</label>
+                    <select class="form-control" id="chauffeur" name="chauffeur">
+                        <option value="">Tous les chauffeurs</option>
+                        {% for chauffeur in chauffeurs %}
+                            <option value="{{ chauffeur.id }}" {% if selected_chauffeur == chauffeur.id|stringformat:"s" %}selected{% endif %}>
+                                {{ chauffeur.get_full_name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Filtre par date de début -->
+                <div class="col-md-3 mb-3">
+                    <label for="date_debut">Date de début</label>
+                    <input type="date" class="form-control" id="date_debut" name="date_debut" value="{{ date_debut }}">
+                </div>
+                
+                <!-- Filtre par date de fin -->
+                <div class="col-md-3 mb-3">
+                    <label for="date_fin">Date de fin</label>
+                    <input type="date" class="form-control" id="date_fin" name="date_fin" value="{{ date_fin }}">
+                </div>
+                
+                <!-- Bouton de filtrage -->
+                <div class="col-md-3 mb-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary">Filtrer</button>
+                    <a href="{% url 'rapport:evaluation_chauffeurs' %}" class="btn btn-secondary ml-2">Réinitialiser</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tableau des évaluations -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Évaluation des chauffeurs</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Chauffeur</th>
+                            <th>Nombre de courses</th>
+                            <th>Distance totale (km)</th>
+                            <th>Distance moyenne par course (km)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for evaluation in evaluations %}
+                            <tr>
+                                <td>{{ evaluation.chauffeur.get_full_name }}</td>
+                                <td>{{ evaluation.nb_courses }}</td>
+                                <td>{{ evaluation.distance_totale|floatformat:2 }}</td>
+                                <td>{{ evaluation.distance_moyenne|floatformat:2 }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center">Aucune donnée disponible pour cette période</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        $('#dataTable').DataTable({
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/French.json"
+            },
+            "order": [[1, "desc"]]
+        });
+    });
+</script>
+{% endblock %} 

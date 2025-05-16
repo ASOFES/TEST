@@ -1,0 +1,18 @@
+[
+{
+    "model": "entretien.entretien",
+    "pk": 1,
+    "fields": {
+        "vehicule": 1,
+        "garage": "CFAO",
+        "date_entretien": "2025-05-12",
+        "statut": "termine",
+        "motif": "freins",
+        "cout": "155.00",
+        "createur": 2,
+        "date_creation": "2025-05-10T19:16:19.958Z",
+        "date_modification": "2025-05-12T17:30:06.360Z",
+        "commentaires": "bien faits"
+    }
+}
+]

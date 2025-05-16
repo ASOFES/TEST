@@ -15,10 +15,11 @@
                     <p class="lead mb-4">Êtes-vous sûr de vouloir supprimer ce ravitaillement ?</p>
                     
                     <div class="alert alert-warning">
-                        <p class="mb-1"><strong>Véhicule :</strong> {{ ravitaillement.vehicule.immatriculation }} - {{ ravitaillement.vehicule.marque }} {{ ravitaillement.vehicule.modele }}</p>
-                        <p class="mb-1"><strong>Date :</strong> {{ ravitaillement.date_ravitaillement|date:"d/m/Y H:i" }}</p>
-                        <p class="mb-1"><strong>Quantité :</strong> {{ ravitaillement.litres }} litres</p>
-                        <p class="mb-0"><strong>Coût total :</strong> {{ ravitaillement.cout_total }} €</p>
+                        <p class="mb-0"><strong>Véhicule :</strong> {{ ravitaillement.vehicule.immatriculation }}</p>
+                        <p class="mb-0"><strong>Date :</strong> {{ ravitaillement.date_ravitaillement|date:"d/m/Y H:i" }}</p>
+                        <p class="mb-0"><strong>Station :</strong> {{ ravitaillement.nom_station|default:"Non spécifiée" }}</p>
+                        <p class="mb-0"><strong>Litres :</strong> {{ ravitaillement.litres }}</p>
+                        <p class="mb-0"><strong>Coût total :</strong> {{ ravitaillement.cout_total }} $</p>
                     </div>
                     
                     <p class="text-danger mb-4">Cette action est irréversible !</p>

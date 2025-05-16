@@ -12,6 +12,7 @@ from .vehicule_forms import VehiculeForm
 from .utils import render_to_pdf
 from entretien.models import Entretien
 from ravitaillement.models import Ravitaillement
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 
 def home_view(request):
     """Vue pour la page d'accueil"""
@@ -81,7 +82,20 @@ def is_admin(user):
 @user_passes_test(is_admin)
 def user_list(request):
     """Vue pour afficher la liste des utilisateurs (réservée aux administrateurs)"""
-    users = Utilisateur.objects.all().order_by('username')
+    users_list = Utilisateur.objects.all().order_by('username')
+    
+    # Pagination - 5 utilisateurs par page (réduit de 10 à 5)
+    paginator = Paginator(users_list, 5)
+    page = request.GET.get('page')
+    
+    try:
+        users = paginator.page(page)
+    except PageNotAnInteger:
+        # Si la page n'est pas un entier, afficher la première page
+        users = paginator.page(1)
+    except EmptyPage:
+        # Si la page est hors limites (par exemple 9999), afficher la dernière page
+        users = paginator.page(paginator.num_pages)
     
     # Tracer l'action
     ActionTraceur.objects.create(
@@ -213,7 +227,20 @@ def user_toggle_active(request, pk):
 @user_passes_test(is_admin)
 def vehicule_list(request):
     """Vue pour afficher la liste des véhicules (réservée aux administrateurs)"""
-    vehicules = Vehicule.objects.all().order_by('immatriculation')
+    vehicules_list = Vehicule.objects.all().order_by('immatriculation')
+    
+    # Pagination - 5 véhicules par page
+    paginator = Paginator(vehicules_list, 5)
+    page = request.GET.get('page')
+    
+    try:
+        vehicules = paginator.page(page)
+    except PageNotAnInteger:
+        # Si la page n'est pas un entier, afficher la première page
+        vehicules = paginator.page(1)
+    except EmptyPage:
+        # Si la page est hors limites (par exemple 9999), afficher la dernière page
+        vehicules = paginator.page(paginator.num_pages)
     
     # Tracer l'action
     ActionTraceur.objects.create(

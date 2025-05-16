@@ -1,0 +1,239 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load chat_extras %}
+
+{% block title %}Conversation avec {{ other_user.get_full_name|default:other_user.username }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chat-container {
+        height: 70vh;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .messages-container {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1rem;
+    }
+    
+    .message {
+        max-width: 75%;
+        margin-bottom: 1rem;
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        position: relative;
+    }
+    
+    .message-sent {
+        background-color: var(--secondary-color);
+        color: white;
+        margin-left: auto;
+        border-bottom-right-radius: 0;
+    }
+    
+    .message-received {
+        background-color: #f1f1f1;
+        margin-right: auto;
+        border-bottom-left-radius: 0;
+    }
+    
+    .message-time {
+        font-size: 0.7rem;
+        opacity: 0.7;
+        margin-top: 0.25rem;
+    }
+    
+    .message-sent .message-time {
+        text-align: right;
+    }
+    
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        object-fit: cover;
+    }
+    
+    .user-status {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        border: 2px solid white;
+    }
+    
+    .user-status.online {
+        background-color: #28a745;
+    }
+    
+    .user-status.offline {
+        background-color: #6c757d;
+    }
+    
+    .role-badge {
+        font-size: 0.7rem;
+    }
+    
+    .role-demandeur {
+        background-color: #28a745;
+    }
+    
+    .role-dispatch {
+        background-color: #dc3545;
+    }
+    
+    .role-chauffeur {
+        background-color: #fd7e14;
+    }
+    
+    .role-admin {
+        background-color: #007bff;
+    }
+    
+    .role-securite {
+        background-color: #6f42c1;
+    }
+    
+    .date-divider {
+        text-align: center;
+        margin: 1rem 0;
+        position: relative;
+    }
+    
+    .date-divider::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 50%;
+        width: 100%;
+        height: 1px;
+        background-color: #dee2e6;
+        z-index: 1;
+    }
+    
+    .date-divider span {
+        background-color: white;
+        padding: 0 1rem;
+        position: relative;
+        z-index: 2;
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+    
+    .message-form {
+        padding: 1rem;
+        border-top: 1px solid #dee2e6;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <a href="{% url 'chat:conversations_list' %}" class="btn btn-sm btn-outline-secondary me-3">
+                            <i class="fas fa-arrow-left"></i>
+                        </a>
+                        <div class="position-relative me-3">
+                            {% if other_user.photo %}
+                            <img src="{{ other_user.photo.url }}" alt="{{ other_user.get_full_name }}" class="rounded-circle user-avatar">
+                            {% else %}
+                            <div class="rounded-circle user-avatar bg-secondary d-flex justify-content-center align-items-center text-white">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            {% endif %}
+                            <span class="user-status {% if other_user.is_active %}online{% else %}offline{% endif %}"></span>
+                        </div>
+                        <div>
+                            <h5 class="mb-0">
+                                {{ other_user.get_full_name|default:other_user.username }}
+                                <span class="badge role-{{ other_user.role }} role-badge ms-1">{{ other_user.get_role_display }}</span>
+                            </h5>
+                            <small class="text-muted">
+                                {% if other_user.is_active %}En ligne{% else %}Hors ligne{% endif %}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                <div class="chat-container">
+                    <div class="messages-container" id="messages-container">
+                        {% if messages %}
+                            {% with messages|first as first_message %}
+                            <div class="date-divider">
+                                <span>{{ first_message.date_envoi|date:"d F Y" }}</span>
+                            </div>
+                            {% endwith %}
+                            
+                            {% for message in messages %}
+                                {% if forloop.counter > 1 %}
+                                    {% with messages|index:forloop.counter0 as current_message %}
+                                    {% with messages|index:forloop.counter0|add:"-1" as previous_message %}
+                                        {% if current_message.date_envoi|date:"d F Y" != previous_message.date_envoi|date:"d F Y" %}
+                                        <div class="date-divider">
+                                            <span>{{ current_message.date_envoi|date:"d F Y" }}</span>
+                                        </div>
+                                        {% endif %}
+                                    {% endwith %}
+                                    {% endwith %}
+                                {% endif %}
+                                
+                                <div class="message {% if message.expediteur == request.user %}message-sent{% else %}message-received{% endif %}">
+                                    {{ message.contenu|linebreaksbr }}
+                                    <div class="message-time">
+                                        {{ message.date_envoi|date:"H:i" }}
+                                        {% if message.expediteur == request.user %}
+                                            {% if message.lu %}
+                                            <i class="fas fa-check-double ms-1" title="Lu"></i>
+                                            {% else %}
+                                            <i class="fas fa-check ms-1" title="Envoyé"></i>
+                                            {% endif %}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center py-5">
+                                <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+                                <p>Aucun message dans cette conversation.</p>
+                                <p>Envoyez un message pour commencer à discuter.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="message-form">
+                        <form method="post">
+                            {% csrf_token %}
+                            <div class="input-group">
+                                {{ form.contenu }}
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </div>
+                            {% if form.contenu.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.contenu.errors }}
+                            </div>
+                            {% endif %}
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Faire défiler vers le bas pour voir les derniers messages
+        const messagesContainer = document.getElementById('messages-container');
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    });
+</script>
+{% endblock %} 

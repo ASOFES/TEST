@@ -1,0 +1,87 @@
+[
+{
+    "model": "ravitaillement.ravitaillement",
+    "pk": 1,
+    "fields": {
+        "vehicule": 1,
+        "date_ravitaillement": "2025-05-12T17:19:17.039Z",
+        "nom_station": null,
+        "kilometrage_avant": 5000,
+        "kilometrage_apres": 5500,
+        "litres": "150.00",
+        "cout_unitaire": "1.50",
+        "cout_total": "225.00",
+        "createur": 2,
+        "commentaires": "OBSERVONS LE RENDEMENT",
+        "image": ""
+    }
+},
+{
+    "model": "ravitaillement.ravitaillement",
+    "pk": 2,
+    "fields": {
+        "vehicule": 1,
+        "date_ravitaillement": "2025-05-12T17:41:02.595Z",
+        "nom_station": "PMG",
+        "kilometrage_avant": 600,
+        "kilometrage_apres": 5000,
+        "litres": "150.00",
+        "cout_unitaire": "1.50",
+        "cout_total": "225.00",
+        "createur": 2,
+        "commentaires": "SAUVETAGE",
+        "image": ""
+    }
+},
+{
+    "model": "ravitaillement.ravitaillement",
+    "pk": 3,
+    "fields": {
+        "vehicule": 2,
+        "date_ravitaillement": "2025-05-13T06:08:27.711Z",
+        "nom_station": "pygma",
+        "kilometrage_avant": 1500,
+        "kilometrage_apres": 1500,
+        "litres": "100.00",
+        "cout_unitaire": "1.50",
+        "cout_total": "150.00",
+        "createur": 2,
+        "commentaires": "première prévision",
+        "image": ""
+    }
+},
+{
+    "model": "ravitaillement.ravitaillement",
+    "pk": 4,
+    "fields": {
+        "vehicule": 2,
+        "date_ravitaillement": "2025-05-13T07:36:26.077Z",
+        "nom_station": "pygma",
+        "kilometrage_avant": 1500,
+        "kilometrage_apres": 2000,
+        "litres": "100.00",
+        "cout_unitaire": "1.50",
+        "cout_total": "150.00",
+        "createur": 2,
+        "commentaires": "première ravitaillement",
+        "image": "images_ravitaillements/conver_vOzJZ3s.jpg"
+    }
+},
+{
+    "model": "ravitaillement.ravitaillement",
+    "pk": 5,
+    "fields": {
+        "vehicule": 2,
+        "date_ravitaillement": "2025-05-13T14:35:42.630Z",
+        "nom_station": "pygma",
+        "kilometrage_avant": 2000,
+        "kilometrage_apres": 2500,
+        "litres": "50.00",
+        "cout_unitaire": "1.50",
+        "cout_total": "75.00",
+        "createur": 2,
+        "commentaires": "ravitaillement normal",
+        "image": "images_ravitaillements/garage_.jpg"
+    }
+}
+]

@@ -12,13 +12,21 @@ class EntretienForm(forms.ModelForm):
     
     class Meta:
         model = Entretien
-        fields = ['vehicule', 'garage', 'date_entretien', 'statut', 'motif', 'cout', 'commentaires']
+        fields = ['vehicule', 'garage', 'date_entretien', 'statut', 'motif', 'cout', 'kilometrage', 'piece_justificative', 'commentaires']
         widgets = {
             'vehicule': forms.Select(attrs={'class': 'form-select'}),
             'garage': forms.TextInput(attrs={'class': 'form-control'}),
             'statut': forms.Select(attrs={'class': 'form-select'}),
             'motif': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'cout': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'kilometrage': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Sera récupéré automatiquement après sélection du véhicule'
+            }),
+            'piece_justificative': forms.FileInput(attrs={
+                'class': 'form-control',
+                'accept': 'image/*,.pdf'
+            }),
             'commentaires': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
     
@@ -35,7 +43,9 @@ class EntretienForm(forms.ModelForm):
         self.fields['date_entretien'].label = "Date de l'entretien"
         self.fields['statut'].label = "Statut"
         self.fields['motif'].label = "Motif de l'entretien"
-        self.fields['cout'].label = "Coût (€)"
+        self.fields['cout'].label = "Coût ($)"
+        self.fields['kilometrage'].label = "Kilométrage actuel"
+        self.fields['piece_justificative'].label = "Pièce justificative"
         self.fields['commentaires'].label = "Commentaires additionnels"
     
     def save(self, commit=True):

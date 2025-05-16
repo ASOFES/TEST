@@ -32,7 +32,7 @@
                         {% endfor %}
                     {% endif %}
                     
-                    <form method="post" novalidate id="ravitaillementForm">
+                    <form method="post" novalidate id="ravitaillementForm" enctype="multipart/form-data">
                         {% csrf_token %}
                         
                         <div class="row mb-3">
@@ -43,6 +43,16 @@
                                     {% if form.vehicule.errors %}
                                         <div class="invalid-feedback d-block">
                                             {{ form.vehicule.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="form-group mb-3">
+                                    <label for="{{ form.nom_station.id_for_label }}" class="form-label">{{ form.nom_station.label }}</label>
+                                    {{ form.nom_station }}
+                                    {% if form.nom_station.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.nom_station.errors }}
                                         </div>
                                     {% endif %}
                                 </div>
@@ -100,7 +110,7 @@
                             
                             <div class="col-md-4">
                                 <div class="form-group mb-3">
-                                    <label for="cout_total_calcule" class="form-label">Coût total estimé (€)</label>
+                                    <label for="cout_total_calcule" class="form-label">Coût total estimé ($)</label>
                                     <input type="text" id="cout_total_calcule" class="form-control" readonly>
                                 </div>
                             </div>
@@ -114,6 +124,17 @@
                                     {{ form.commentaires.errors }}
                                 </div>
                             {% endif %}
+                        </div>
+                        
+                        <div class="form-group mb-3">
+                            <label for="{{ form.image.id_for_label }}" class="form-label">{{ form.image.label }}</label>
+                            {{ form.image }}
+                            {% if form.image.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.image.errors }}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">Formats acceptés: JPG, PNG, GIF. Taille maximale: 5 MB.</small>
                         </div>
                         
                         <div class="d-flex justify-content-between mt-4">
@@ -146,7 +167,7 @@
         // Calculer automatiquement le coût total
         const litresInput = document.getElementById('id_litres');
         const coutUnitaireInput = document.getElementById('id_cout_unitaire');
-        const coutTotalInput = document.getElementById('id_cout_total_calcule');
+        const coutTotalInput = document.getElementById('cout_total_calcule');
         
         function calculerCoutTotal() {
             const litres = parseFloat(litresInput.value) || 0;

@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Conversations{% endblock %}
+
+{% block extra_css %}
+<style>
+    .conversation-item {
+        transition: all 0.3s;
+        border-left: 3px solid transparent;
+    }
+    
+    .conversation-item:hover {
+        background-color: #f8f9fa;
+        border-left: 3px solid var(--secondary-color);
+    }
+    
+    .conversation-item.active {
+        background-color: #e9ecef;
+        border-left: 3px solid var(--primary-color);
+    }
+    
+    .conversation-item .unread-badge {
+        font-size: 0.7rem;
+    }
+    
+    .conversation-preview {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 200px;
+    }
+    
+    .user-avatar {
+        width: 48px;
+        height: 48px;
+        object-fit: cover;
+    }
+    
+    .user-status {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        border: 2px solid white;
+    }
+    
+    .user-status.online {
+        background-color: #28a745;
+    }
+    
+    .user-status.offline {
+        background-color: #6c757d;
+    }
+    
+    .role-badge {
+        font-size: 0.7rem;
+    }
+    
+    .role-demandeur {
+        background-color: #28a745;
+    }
+    
+    .role-dispatch {
+        background-color: #dc3545;
+    }
+    
+    .role-chauffeur {
+        background-color: #fd7e14;
+    }
+    
+    .role-admin {
+        background-color: #007bff;
+    }
+    
+    .role-securite {
+        background-color: #6f42c1;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-comments me-2"></i>Conversations</h5>
+                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#newConversationModal">
+                        <i class="fas fa-plus me-1"></i> Nouvelle conversation
+                    </button>
+                </div>
+                <div class="card-body">
+                    {% if conversations %}
+                    <div class="list-group">
+                        {% for item in conversations %}
+                        <a href="{% url 'chat:conversation_detail' item.conversation.id %}" class="list-group-item list-group-item-action conversation-item d-flex align-items-center p-3">
+                            <div class="position-relative me-3">
+                                {% if item.other_user.photo %}
+                                <img src="{{ item.other_user.photo.url }}" alt="{{ item.other_user.get_full_name }}" class="rounded-circle user-avatar">
+                                {% else %}
+                                <div class="rounded-circle user-avatar bg-secondary d-flex justify-content-center align-items-center text-white">
+                                    <i class="fas fa-user fa-2x"></i>
+                                </div>
+                                {% endif %}
+                                <span class="user-status {% if item.other_user.is_active %}online{% else %}offline{% endif %}"></span>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0">
+                                        {{ item.other_user.get_full_name|default:item.other_user.username }}
+                                        <span class="badge role-{{ item.other_user.role }} role-badge ms-1">{{ item.other_user.get_role_display }}</span>
+                                    </h6>
+                                    <small class="text-muted">
+                                        {% if item.last_message %}
+                                        {{ item.last_message.date_envoi|date:"d/m/Y H:i" }}
+                                        {% endif %}
+                                    </small>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <p class="mb-0 text-muted conversation-preview">
+                                        {% if item.last_message %}
+                                        {% if item.last_message.expediteur == request.user %}
+                                        <i class="fas fa-reply text-muted me-1"></i>
+                                        {% endif %}
+                                        {{ item.last_message.contenu }}
+                                        {% else %}
+                                        <em>Aucun message</em>
+                                        {% endif %}
+                                    </p>
+                                    {% if item.unread_count > 0 %}
+                                    <span class="badge bg-danger rounded-pill unread-badge">{{ item.unread_count }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+                        <p class="mb-0">Vous n'avez pas encore de conversations.</p>
+                        <p>Cliquez sur "Nouvelle conversation" pour commencer à discuter.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour nouvelle conversation -->
+<div class="modal fade" id="newConversationModal" tabindex="-1" aria-labelledby="newConversationModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="newConversationModalLabel">Nouvelle conversation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="{{ form.contact.id_for_label }}" class="form-label">Sélectionnez un contact</label>
+                        {{ form.contact }}
+                        {% if form.contact.errors %}
+                        <div class="invalid-feedback d-block">
+                            {{ form.contact.errors }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Démarrer la conversation</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

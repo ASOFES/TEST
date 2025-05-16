@@ -6,7 +6,7 @@ def demandeur_required(view_func):
     """Décorateur pour restreindre l'accès aux demandeurs uniquement"""
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
-        if request.user.is_authenticated and request.user.role == 'demandeur':
+        if request.user.is_authenticated and (request.user.role == 'demandeur' or request.user.role == 'admin' or request.user.is_superuser):
             return view_func(request, *args, **kwargs)
         else:
             messages.error(request, "Vous n'avez pas les permissions nécessaires pour accéder à cette page.")
@@ -17,7 +17,7 @@ def dispatcher_required(view_func):
     """Décorateur pour restreindre l'accès aux dispatchers uniquement"""
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
-        if request.user.is_authenticated and request.user.role == 'dispatcher':
+        if request.user.is_authenticated and (request.user.role == 'dispatch' or request.user.role == 'admin' or request.user.is_superuser):
             return view_func(request, *args, **kwargs)
         else:
             messages.error(request, "Vous n'avez pas les permissions nécessaires pour accéder à cette page.")
@@ -28,7 +28,7 @@ def chauffeur_required(view_func):
     """Décorateur pour restreindre l'accès aux chauffeurs uniquement"""
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
-        if request.user.is_authenticated and request.user.role == 'chauffeur':
+        if request.user.is_authenticated and (request.user.role == 'chauffeur' or request.user.role == 'admin' or request.user.is_superuser):
             return view_func(request, *args, **kwargs)
         else:
             messages.error(request, "Vous n'avez pas les permissions nécessaires pour accéder à cette page.")
@@ -39,7 +39,7 @@ def securite_required(view_func):
     """Décorateur pour restreindre l'accès au personnel de sécurité uniquement"""
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
-        if request.user.is_authenticated and request.user.role == 'securite':
+        if request.user.is_authenticated and (request.user.role == 'securite' or request.user.role == 'admin' or request.user.is_superuser):
             return view_func(request, *args, **kwargs)
         else:
             messages.error(request, "Vous n'avez pas les permissions nécessaires pour accéder à cette page.")
@@ -50,7 +50,7 @@ def admin_required(view_func):
     """Décorateur pour restreindre l'accès aux administrateurs uniquement"""
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
-        if request.user.is_authenticated and (request.user.is_staff or request.user.is_superuser):
+        if request.user.is_authenticated and (request.user.role == 'admin' or request.user.is_staff or request.user.is_superuser):
             return view_func(request, *args, **kwargs)
         else:
             messages.error(request, "Vous n'avez pas les permissions nécessaires pour accéder à cette page.")

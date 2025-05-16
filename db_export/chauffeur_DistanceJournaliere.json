@@ -1,0 +1,12 @@
+[
+{
+    "model": "chauffeur.distancejournaliere",
+    "pk": 1,
+    "fields": {
+        "chauffeur": 3,
+        "date": "2025-05-13",
+        "distance_totale": 1000,
+        "nombre_courses": 2
+    }
+}
+]

@@ -3,15 +3,21 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Q
-from core.models import Course, ActionTraceur
+from core.models import Course, ActionTraceur, Utilisateur
 from .forms import DemandeForm
+from notifications.utils import notify_user, send_sms, send_whatsapp
 import datetime
 
 @login_required
 def dashboard(request):
     """Vue pour le tableau de bord du demandeur de missions"""
     # Récupérer les demandes de l'utilisateur connecté
-    demandes = Course.objects.filter(demandeur=request.user).order_by('-date_demande')
+    if request.user.role == 'admin' or request.user.is_superuser:
+        # Pour les admins et superusers, montrer toutes les demandes
+        demandes = Course.objects.all().order_by('-date_demande')
+    else:
+        # Pour les demandeurs normaux, montrer seulement leurs demandes
+        demandes = Course.objects.filter(demandeur=request.user).order_by('-date_demande')
     
     # Filtres
     statut = request.GET.get('statut')
@@ -30,17 +36,25 @@ def dashboard(request):
         demandes = demandes.filter(date_demande__date__lte=date_fin)
     
     # Pagination
-    paginator = Paginator(demandes, 10)  # 10 demandes par page
+    paginator = Paginator(demandes, 5)  # 5 demandes par page (réduit de 10 à 5)
     page_number = request.GET.get('page')
     demandes_page = paginator.get_page(page_number)
     
     # Statistiques
-    stats = {
-        'total': Course.objects.filter(demandeur=request.user).count(),
-        'en_attente': Course.objects.filter(demandeur=request.user, statut='en_attente').count(),
-        'validees': Course.objects.filter(demandeur=request.user, statut='validee').count(),
-        'refusees': Course.objects.filter(demandeur=request.user, statut='refusee').count(),
-    }
+    if request.user.role == 'admin' or request.user.is_superuser:
+        stats = {
+            'total': Course.objects.count(),
+            'en_attente': Course.objects.filter(statut='en_attente').count(),
+            'validees': Course.objects.filter(statut='validee').count(),
+            'refusees': Course.objects.filter(statut='refusee').count(),
+        }
+    else:
+        stats = {
+            'total': Course.objects.filter(demandeur=request.user).count(),
+            'en_attente': Course.objects.filter(demandeur=request.user, statut='en_attente').count(),
+            'validees': Course.objects.filter(demandeur=request.user, statut='validee').count(),
+            'refusees': Course.objects.filter(demandeur=request.user, statut='refusee').count(),
+        }
     
     context = {
         'demandes': demandes_page,
@@ -67,6 +81,33 @@ def nouvelle_demande(request):
                 details=f"Demande #{demande.id} - {demande.point_embarquement} → {demande.destination}"
             )
             
+            # Notification aux dispatchers
+            dispatchers = Utilisateur.objects.filter(role='dispatch', is_active=True)
+            
+            # Message de notification
+            notification_title = f"Nouvelle demande de course #{demande.id}"
+            notification_message = f"{request.user.get_full_name()} a créé une nouvelle demande de course de {demande.point_embarquement} à {demande.destination}."
+            
+            for dispatcher in dispatchers:
+                # Notification interne
+                notify_user(
+                    dispatcher,
+                    notification_title,
+                    notification_message,
+                    notification_type='all',
+                    course=demande
+                )
+                
+                # Notification par SMS si le dispatcher a un numéro de téléphone
+                if dispatcher.telephone:
+                    sms_message = f"{notification_title}\n{notification_message}\nConnectez-vous pour la traiter."
+                    send_sms(dispatcher.telephone, sms_message)
+                
+                # Notification par WhatsApp si le dispatcher a un numéro de téléphone
+                if dispatcher.telephone:
+                    whatsapp_message = f"*{notification_title}*\n\n{notification_message}\n\nConnectez-vous pour la traiter."
+                    send_whatsapp(dispatcher.telephone, whatsapp_message)
+            
             messages.success(request, 'Votre demande de mission a été créée avec succès et est en attente de validation.')
             return redirect('demandeur:detail_demande', demande.id)
     else:
@@ -77,7 +118,11 @@ def nouvelle_demande(request):
 @login_required
 def detail_demande(request, demande_id):
     """Vue pour afficher les détails d'une demande de mission"""
-    demande = get_object_or_404(Course, id=demande_id, demandeur=request.user)
+    # Pour les admins et superusers, permettre l'accès à toutes les demandes
+    if request.user.role == 'admin' or request.user.is_superuser:
+        demande = get_object_or_404(Course, id=demande_id)
+    else:
+        demande = get_object_or_404(Course, id=demande_id, demandeur=request.user)
     
     # Récupérer l'historique des actions liées à cette demande
     historique = ActionTraceur.objects.filter(
@@ -95,7 +140,11 @@ def detail_demande(request, demande_id):
 @login_required
 def modifier_demande(request, demande_id):
     """Vue pour modifier une demande de mission"""
-    demande = get_object_or_404(Course, id=demande_id, demandeur=request.user, statut='en_attente')
+    # Pour les admins et superusers, permettre l'accès à toutes les demandes
+    if request.user.role == 'admin' or request.user.is_superuser:
+        demande = get_object_or_404(Course, id=demande_id, statut='en_attente')
+    else:
+        demande = get_object_or_404(Course, id=demande_id, demandeur=request.user, statut='en_attente')
     
     if request.method == 'POST':
         form = DemandeForm(request.POST, instance=demande)
@@ -119,7 +168,11 @@ def modifier_demande(request, demande_id):
 @login_required
 def annuler_demande(request, demande_id):
     """Vue pour annuler une demande de mission"""
-    demande = get_object_or_404(Course, id=demande_id, demandeur=request.user, statut='en_attente')
+    # Pour les admins et superusers, permettre l'accès à toutes les demandes
+    if request.user.role == 'admin' or request.user.is_superuser:
+        demande = get_object_or_404(Course, id=demande_id, statut='en_attente')
+    else:
+        demande = get_object_or_404(Course, id=demande_id, demandeur=request.user, statut='en_attente')
     
     demande.statut = 'annulee'
     demande.save()

@@ -1,1 +1,1 @@
-web: gunicorn gestion_vehicules.wsgi 
+web: gunicorn app:app 

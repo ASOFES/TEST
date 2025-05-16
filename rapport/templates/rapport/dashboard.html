@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Tableau de bord des rapports{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Tableau de bord des rapports</h5>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>Bienvenue dans le module de rapports. Sélectionnez un type de rapport ci-dessous pour visualiser les données.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-3 mb-4">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-car fa-3x text-primary mb-3"></i>
+                                    <h5 class="card-title">Rapport des véhicules</h5>
+                                    <p class="card-text">Statistiques et données sur la flotte de véhicules</p>
+                                    <a href="{% url 'rapport:vehicules' %}" class="btn btn-primary">
+                                        <i class="fas fa-eye me-1"></i>Consulter
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3 mb-4">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-route fa-3x text-success mb-3"></i>
+                                    <h5 class="card-title">Rapport des missions</h5>
+                                    <p class="card-text">Données sur les courses et missions effectuées</p>
+                                    <a href="{% url 'rapport:missions' %}" class="btn btn-success">
+                                        <i class="fas fa-eye me-1"></i>Consulter
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3 mb-4">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-tools fa-3x text-warning mb-3"></i>
+                                    <h5 class="card-title">Rapport des entretiens</h5>
+                                    <p class="card-text">Statistiques sur les entretiens et réparations</p>
+                                    <a href="{% url 'rapport:entretiens' %}" class="btn btn-warning">
+                                        <i class="fas fa-eye me-1"></i>Consulter
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3 mb-4">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-gas-pump fa-3x text-danger mb-3"></i>
+                                    <h5 class="card-title">Rapport carburant</h5>
+                                    <p class="card-text">Analyse de la consommation de carburant</p>
+                                    <a href="{% url 'rapport:carburant' %}" class="btn btn-danger">
+                                        <i class="fas fa-eye me-1"></i>Consulter
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3 mb-4">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-user-check fa-3x text-info mb-3"></i>
+                                    <h5 class="card-title">Évaluation des chauffeurs</h5>
+                                    <p class="card-text">Statistiques de performance des chauffeurs</p>
+                                    <a href="{% url 'rapport:evaluation_chauffeurs' %}" class="btn btn-info">
+                                        <i class="fas fa-eye me-1"></i>Consulter
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3 mb-4">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-users fa-3x text-purple mb-3"></i>
+                                    <h5 class="card-title">Rapport des demandeurs</h5>
+                                    <p class="card-text">Statistiques sur les demandeurs de courses</p>
+                                    <a href="{% url 'rapport:demandeurs' %}" class="btn btn-secondary">
+                                        <i class="fas fa-eye me-1"></i>Consulter
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3 mb-4">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-tachometer-alt fa-3x text-primary mb-3"></i>
+                                    <h5 class="card-title">Utilisation des véhicules</h5>
+                                    <p class="card-text">Statistiques sur les courses et kilométrages</p>
+                                    <a href="{% url 'rapport:vehicules_utilisation' %}" class="btn btn-primary">
+                                        <i class="fas fa-eye me-1"></i>Consulter
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3 mb-4">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-money-bill-wave fa-3x text-success mb-3"></i>
+                                    <h5 class="card-title">Dépenses carburant et entretien</h5>
+                                    <p class="card-text">Analyse combinée des dépenses de carburant et d'entretien</p>
+                                    <a href="{% url 'rapport:depenses_carburant_entretien' %}" class="btn btn-success">
+                                        <i class="fas fa-eye me-1"></i>Consulter
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

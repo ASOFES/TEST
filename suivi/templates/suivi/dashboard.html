@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block title %}Tableau de bord Suivi{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-chart-line me-2"></i>Tableau de bord Suivi</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Message d'information sur le module -->
+                    <div class="alert alert-info mb-4">
+                        <h5><i class="fas fa-info-circle me-2"></i>Bienvenue dans le module de Suivi</h5>
+                        <p>Ce module vous permet de suivre l'activité de votre flotte de véhicules. Vous pouvez :</p>
+                        <ul>
+                            <li>Consulter les statistiques d'utilisation des véhicules</li>
+                            <li>Suivre les missions effectuées</li>
+                            <li>Analyser la consommation de carburant</li>
+                            <li>Suivre les entretiens planifiés et réalisés</li>
+                        </ul>
+                        <p>Utilisez les liens ci-dessous pour accéder aux différentes fonctionnalités.</p>
+                    </div>
+
+                    <!-- Statistiques générales -->
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body text-center bg-primary text-white rounded">
+                                    <h1 class="display-4">{{ vehicules_count }}</h1>
+                                    <h5>Véhicules</h5>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body text-center bg-success text-white rounded">
+                                    <h1 class="display-4">{{ courses_count }}</h1>
+                                    <h5>Missions</h5>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body text-center bg-warning text-white rounded">
+                                    <h1 class="display-4">{{ entretiens_count }}</h1>
+                                    <h5>Entretiens</h5>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body text-center bg-info text-white rounded">
+                                    <h1 class="display-4">{{ ravitaillements_count }}</h1>
+                                    <h5>Ravitaillements</h5>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Liens rapides -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body">
+                                    <h5 class="card-title mb-3">Accès rapides</h5>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <a href="{% url 'suivi:suivi_vehicules' %}" class="btn btn-primary btn-lg w-100">
+                                                <i class="fas fa-car me-2"></i>Suivi des véhicules
+                                            </a>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <a href="{% url 'suivi:suivi_missions' %}" class="btn btn-success btn-lg w-100">
+                                                <i class="fas fa-tasks me-2"></i>Suivi des missions
+                                            </a>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <a href="{% url 'suivi:suivi_entretiens' %}" class="btn btn-warning btn-lg w-100">
+                                                <i class="fas fa-tools me-2"></i>Suivi des entretiens
+                                            </a>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <a href="{% url 'suivi:suivi_carburant' %}" class="btn btn-info btn-lg w-100">
+                                                <i class="fas fa-gas-pump me-2"></i>Suivi du carburant
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

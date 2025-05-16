@@ -23,9 +23,13 @@ except ImportError:
     PDF_ENABLED = False
 
 @login_required
-@securite_required
 def dashboard(request):
     """Tableau de bord pour le personnel de sécurité"""
+    # Vérifier que l'utilisateur est bien un agent de sécurité, un admin ou un superuser
+    if request.user.role != 'securite' and request.user.role != 'admin' and not request.user.is_superuser:
+        messages.error(request, "Vous n'avez pas les droits pour accéder à cette page.")
+        return redirect('home')
+    
     # Récupérer tous les véhicules pour le filtre
     vehicules = Vehicule.objects.all().order_by('immatriculation')
     
@@ -77,9 +81,13 @@ def dashboard(request):
     return render(request, 'securite/dashboard_simple.html', context)
 
 @login_required
-@securite_required
 def nouvelle_checklist(request):
     """Créer une nouvelle checklist de sécurité"""
+    # Vérifier que l'utilisateur est bien un agent de sécurité, un admin ou un superuser
+    if request.user.role != 'securite' and request.user.role != 'admin' and not request.user.is_superuser:
+        messages.error(request, "Vous n'avez pas les droits pour accéder à cette page.")
+        return redirect('home')
+    
     if request.method == 'POST':
         form = ChecklistSecuriteForm(request.POST)
         if form.is_valid():
@@ -106,9 +114,13 @@ def nouvelle_checklist(request):
     return render(request, 'securite/nouvelle_checklist_simple.html', context)
 
 @login_required
-@securite_required
 def detail_checklist(request, checklist_id):
     """Afficher les détails d'une checklist de sécurité"""
+    # Vérifier que l'utilisateur est bien un agent de sécurité, un admin ou un superuser
+    if request.user.role != 'securite' and request.user.role != 'admin' and not request.user.is_superuser:
+        messages.error(request, "Vous n'avez pas les droits pour accéder à cette page.")
+        return redirect('home')
+    
     checklist = get_object_or_404(CheckListSecurite, id=checklist_id)
     
     # Récupérer l'historique des actions liées à ce véhicule
@@ -147,8 +159,14 @@ def link_callback(uri, rel):
         
     return path
 
+@login_required
 def pdf_checklist(request, checklist_id):
     """Générer un PDF de la checklist de sécurité"""
+    # Vérifier que l'utilisateur est bien un agent de sécurité, un admin ou un superuser
+    if request.user.role != 'securite' and request.user.role != 'admin' and not request.user.is_superuser:
+        messages.error(request, "Vous n'avez pas les droits pour accéder à cette page.")
+        return redirect('home')
+    
     if not PDF_ENABLED:
         messages.error(request, "La génération de PDF n'est pas disponible. Veuillez installer xhtml2pdf.")
         return redirect('securite:detail_checklist', checklist_id)

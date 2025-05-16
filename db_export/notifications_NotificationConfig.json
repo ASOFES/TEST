@@ -1,0 +1,44 @@
+[
+{
+    "model": "notifications.notificationconfig",
+    "pk": 1,
+    "fields": {
+        "utilisateur": 2,
+        "sms_enabled": true,
+        "whatsapp_enabled": true,
+        "email_enabled": true,
+        "notif_demande_course": true,
+        "notif_validation_course": true,
+        "notif_expiration_docs": true,
+        "notif_entretien": true
+    }
+},
+{
+    "model": "notifications.notificationconfig",
+    "pk": 2,
+    "fields": {
+        "utilisateur": 4,
+        "sms_enabled": true,
+        "whatsapp_enabled": true,
+        "email_enabled": true,
+        "notif_demande_course": true,
+        "notif_validation_course": true,
+        "notif_expiration_docs": true,
+        "notif_entretien": true
+    }
+},
+{
+    "model": "notifications.notificationconfig",
+    "pk": 3,
+    "fields": {
+        "utilisateur": 3,
+        "sms_enabled": true,
+        "whatsapp_enabled": true,
+        "email_enabled": true,
+        "notif_demande_course": true,
+        "notif_validation_course": true,
+        "notif_expiration_docs": true,
+        "notif_entretien": true
+    }
+}
+]

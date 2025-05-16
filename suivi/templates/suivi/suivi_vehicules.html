@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block title %}Suivi des Véhicules{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0"><i class="fas fa-car me-2"></i>Suivi des Véhicules</h4>
+                    <div>
+                        <a href="{% url 'suivi:export_vehicules_pdf' %}" class="btn btn-light btn-sm me-2">
+                            <i class="fas fa-file-pdf me-1"></i>Exporter PDF
+                        </a>
+                        <a href="{% url 'suivi:export_vehicules_excel' %}" class="btn btn-light btn-sm me-2">
+                            <i class="fas fa-file-excel me-1"></i>Exporter Excel
+                        </a>
+                        <a href="{% url 'suivi:dashboard' %}" class="btn btn-light btn-sm">
+                            <i class="fas fa-tachometer-alt me-1"></i>Tableau de bord
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <!-- Options de filtrage et tri -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <form method="get" class="d-flex">
+                                <input type="text" name="search" class="form-control form-control-sm me-2" placeholder="Rechercher..." value="{{ request.GET.search }}">
+                                <button type="submit" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </form>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-sort me-1"></i>Trier par
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="?sort=immatriculation">Immatriculation</a></li>
+                                    <li><a class="dropdown-item" href="?sort=marque">Marque</a></li>
+                                    <li><a class="dropdown-item" href="?sort=date_immatriculation">Date d'immatriculation</a></li>
+                                    <li><a class="dropdown-item" href="?sort=distance_totale">Distance parcourue</a></li>
+                                    <li><a class="dropdown-item" href="?sort=nombre_entretiens">Nombre d'entretiens</a></li>
+                                    <li><a class="dropdown-item" href="?sort=volume_carburant">Volume carburant</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Liste des véhicules -->
+                    {% if vehicules_data %}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover" id="vehiculesTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th><a href="?sort={% if request.GET.sort == 'immatriculation' %}-{% endif %}immatriculation" class="text-decoration-none text-dark">Immatriculation {% if request.GET.sort == 'immatriculation' %}<i class="fas fa-sort-down"></i>{% elif request.GET.sort == '-immatriculation' %}<i class="fas fa-sort-up"></i>{% else %}<i class="fas fa-sort"></i>{% endif %}</a></th>
+                                    <th><a href="?sort={% if request.GET.sort == 'marque' %}-{% endif %}marque" class="text-decoration-none text-dark">Marque/Modèle {% if request.GET.sort == 'marque' %}<i class="fas fa-sort-down"></i>{% elif request.GET.sort == '-marque' %}<i class="fas fa-sort-up"></i>{% else %}<i class="fas fa-sort"></i>{% endif %}</a></th>
+                                    <th><a href="?sort={% if request.GET.sort == 'date_immatriculation' %}-{% endif %}date_immatriculation" class="text-decoration-none text-dark">Date Immatriculation {% if request.GET.sort == 'date_immatriculation' %}<i class="fas fa-sort-down"></i>{% elif request.GET.sort == '-date_immatriculation' %}<i class="fas fa-sort-up"></i>{% else %}<i class="fas fa-sort"></i>{% endif %}</a></th>
+                                    <th><a href="?sort={% if request.GET.sort == 'distance_totale' %}-{% endif %}distance_totale" class="text-decoration-none text-dark">Distance Parcourue {% if request.GET.sort == 'distance_totale' %}<i class="fas fa-sort-down"></i>{% elif request.GET.sort == '-distance_totale' %}<i class="fas fa-sort-up"></i>{% else %}<i class="fas fa-sort"></i>{% endif %}</a></th>
+                                    <th><a href="?sort={% if request.GET.sort == 'nombre_entretiens' %}-{% endif %}nombre_entretiens" class="text-decoration-none text-dark">Nombre d'Entretiens {% if request.GET.sort == 'nombre_entretiens' %}<i class="fas fa-sort-down"></i>{% elif request.GET.sort == '-nombre_entretiens' %}<i class="fas fa-sort-up"></i>{% else %}<i class="fas fa-sort"></i>{% endif %}</a></th>
+                                    <th><a href="?sort={% if request.GET.sort == 'volume_carburant' %}-{% endif %}volume_carburant" class="text-decoration-none text-dark">Volume Carburant (L) {% if request.GET.sort == 'volume_carburant' %}<i class="fas fa-sort-down"></i>{% elif request.GET.sort == '-volume_carburant' %}<i class="fas fa-sort-up"></i>{% else %}<i class="fas fa-sort"></i>{% endif %}</a></th>
+                                    <th>Statut</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in vehicules_data %}
+                                <tr>
+                                    <td>{{ item.vehicule.immatriculation }}</td>
+                                    <td>{{ item.vehicule.marque }} {{ item.vehicule.modele }}</td>
+                                    <td>
+                                        {% if item.vehicule.date_immatriculation %}
+                                            {{ item.vehicule.date_immatriculation|date:"d/m/Y" }}
+                                        {% else %}
+                                            Non renseignée
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ item.distance_totale }} km</td>
+                                    <td>{{ item.nombre_entretiens }}</td>
+                                    <td>{{ item.volume_carburant|floatformat:2 }} L</td>
+                                    <td>
+                                        {% if item.vehicule.est_disponible %}
+                                            <span class="badge bg-success">Disponible</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Indisponible</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{% url 'vehicule_detail' item.vehicule.id %}" class="btn btn-sm btn-outline-primary" title="Détails">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{% url 'vehicule_edit' item.vehicule.id %}" class="btn btn-sm btn-outline-warning" title="Modifier">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>Aucun véhicule trouvé.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,29 @@
+[
+{
+    "model": "securite.checklistsecurite",
+    "pk": 1,
+    "fields": {
+        "vehicule": 1,
+        "controleur": 5,
+        "date_controle": "2025-05-11T16:42:52.493Z",
+        "lieu_controle": "kibati",
+        "statut": "non_conforme",
+        "phares_avant": "ok",
+        "phares_arriere": "ok",
+        "clignotants": "ok",
+        "etat_pneus": "ok",
+        "carrosserie": "ok",
+        "tableau_bord": "ok",
+        "freins": "ok",
+        "ceintures": "ok",
+        "proprete": "ok",
+        "carte_grise": "present",
+        "assurance": "present",
+        "triangle": "present",
+        "logos": "present",
+        "type_check": "depart",
+        "kilometrage": 6000,
+        "commentaires": "rien à signaler"
+    }
+}
+]

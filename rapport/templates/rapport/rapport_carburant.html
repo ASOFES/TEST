@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Rapport de consommation de carburant{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-gas-pump me-2"></i>Rapport de consommation de carburant</h5>
+                    <div>
+                        <a href="{% url 'rapport:dashboard' %}" class="btn btn-outline-light btn-sm me-2">
+                            <i class="fas fa-arrow-left me-1"></i>Retour au tableau de bord
+                        </a>
+                        <a href="{% url 'rapport:generer_rapport' 'carburant' %}?{{ request.GET.urlencode }}&format=pdf" class="btn btn-light btn-sm">
+                            <i class="fas fa-download me-1"></i>Télécharger le rapport
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <!-- Filtres de recherche -->
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body">
+                                    <form method="get" class="row g-3">
+                                        <div class="col-md-3">
+                                            <label for="vehicule" class="form-label">Véhicule</label>
+                                            <select name="vehicule" id="vehicule" class="form-select">
+                                                <option value="">Tous les véhicules</option>
+                                                {% for vehicule in vehicules %}
+                                                    <option value="{{ vehicule.id }}" {% if request.GET.vehicule == vehicule.id|stringformat:"i" %}selected{% endif %}>
+                                                        {{ vehicule.immatriculation }} - {{ vehicule.marque }} {{ vehicule.modele }}
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="station" class="form-label">Station</label>
+                                            <input type="text" name="station" id="station" class="form-control" value="{{ request.GET.station }}" placeholder="Nom de la station">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label for="date_debut" class="form-label">Date début</label>
+                                            <input type="date" name="date_debut" id="date_debut" class="form-control" value="{{ request.GET.date_debut }}">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label for="date_fin" class="form-label">Date fin</label>
+                                            <input type="date" name="date_fin" id="date_fin" class="form-control" value="{{ request.GET.date_fin }}">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label for="montant_min" class="form-label">Montant min</label>
+                                            <input type="number" name="montant_min" id="montant_min" class="form-control" value="{{ request.GET.montant_min }}" step="0.01" min="0">
+                                        </div>
+                                        <div class="col-12 text-end">
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fas fa-filter me-1"></i>Filtrer
+                                            </button>
+                                            <a href="{% url 'rapport:carburant' %}" class="btn btn-secondary">
+                                                <i class="fas fa-undo me-1"></i>Réinitialiser
+                                            </a>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if ravitaillements %}
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <span class="text-muted">{{ ravitaillements.paginator.count }} ravitaillement(s) trouvé(s)</span>
+                            <span class="text-muted ms-3">Total: {{ total_litres|floatformat:2 }} L pour {{ total_cout|floatformat:2 }} $</span>
+                        </div>
+                        <div>
+                            <a href="{% url 'rapport:generer_rapport' 'carburant' %}?{{ request.GET.urlencode }}&format=pdf" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-file-pdf me-1"></i>Exporter en PDF
+                            </a>
+                            <a href="{% url 'rapport:generer_rapport' 'carburant' %}?{{ request.GET.urlencode }}&format=excel" class="btn btn-sm btn-outline-success ms-2">
+                                <i class="fas fa-file-excel me-1"></i>Exporter en Excel
+                            </a>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Véhicule</th>
+                                    <th>Station</th>
+                                    <th>Kilométrage</th>
+                                    <th>Distance</th>
+                                    <th>Litres</th>
+                                    <th>Prix unitaire</th>
+                                    <th>Coût total</th>
+                                    <th>Consommation</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for ravitaillement in ravitaillements %}
+                                <tr>
+                                    <td>{{ ravitaillement.date_ravitaillement|date:"d/m/Y H:i" }}</td>
+                                    <td>{{ ravitaillement.vehicule.immatriculation }}</td>
+                                    <td>{{ ravitaillement.nom_station|default:"-" }}</td>
+                                    <td>{{ ravitaillement.kilometrage_apres }} km</td>
+                                    <td>{{ ravitaillement.distance_parcourue }} km</td>
+                                    <td>{{ ravitaillement.litres }} L</td>
+                                    <td>{{ ravitaillement.cout_unitaire }} $/L</td>
+                                    <td>{{ ravitaillement.cout_total }} $</td>
+                                    <td>
+                                        {% if ravitaillement.consommation_moyenne > 0 %}
+                                            {{ ravitaillement.consommation_moyenne|floatformat:2 }} L/100km
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if ravitaillements.paginator.num_pages > 1 %}
+                    <div class="d-flex justify-content-center mt-4">
+                        <nav aria-label="Navigation des pages">
+                            <ul class="pagination">
+                                {% if ravitaillements.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page=1" aria-label="Première">
+                                            <span aria-hidden="true">&laquo;&laquo;</span>
+                                        </a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ ravitaillements.previous_page_number }}" aria-label="Précédente">
+                                            <span aria-hidden="true">&laquo;</span>
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#" aria-label="Première">
+                                            <span aria-hidden="true">&laquo;&laquo;</span>
+                                        </a>
+                                    </li>
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#" aria-label="Précédente">
+                                            <span aria-hidden="true">&laquo;</span>
+                                        </a>
+                                    </li>
+                                {% endif %}
+                                
+                                {% for i in ravitaillements.paginator.page_range %}
+                                    {% if ravitaillements.number == i %}
+                                        <li class="page-item active"><a class="page-link" href="#">{{ i }}</a></li>
+                                    {% elif i > ravitaillements.number|add:'-3' and i < ravitaillements.number|add:'3' %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ i }}">{{ i }}</a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if ravitaillements.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ ravitaillements.next_page_number }}" aria-label="Suivante">
+                                            <span aria-hidden="true">&raquo;</span>
+                                        </a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ ravitaillements.paginator.num_pages }}" aria-label="Dernière">
+                                            <span aria-hidden="true">&raquo;&raquo;</span>
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#" aria-label="Suivante">
+                                            <span aria-hidden="true">&raquo;</span>
+                                        </a>
+                                    </li>
+                                    <li class="page-item disabled">
+                                        <a class="page-link" href="#" aria-label="Dernière">
+                                            <span aria-hidden="true">&raquo;&raquo;</span>
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                    {% endif %}
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>Aucun ravitaillement trouvé.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialiser les sélecteurs avec Select2 pour une meilleure expérience utilisateur
+        if (typeof $.fn.select2 !== 'undefined') {
+            $('#vehicule').select2({
+                theme: 'bootstrap-5',
+                width: '100%'
+            });
+        }
+    });
+</script>
+{% endblock %} 

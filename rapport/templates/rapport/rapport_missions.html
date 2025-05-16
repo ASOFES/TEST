@@ -1,0 +1,270 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Rapport des missions{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-route me-2"></i>Rapport des missions</h5>
+                    <div>
+                        <a href="{% url 'rapport:dashboard' %}" class="btn btn-outline-light btn-sm me-2">
+                            <i class="fas fa-arrow-left me-1"></i>Retour au tableau de bord
+                        </a>
+                        <a href="{% url 'rapport:generer_rapport' 'missions' %}?{{ request.GET.urlencode }}&format=pdf" class="btn btn-light btn-sm">
+                            <i class="fas fa-download me-1"></i>Télécharger le rapport
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <!-- Filtres de recherche -->
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <div class="card border-0 shadow-sm">
+                                <div class="card-body">
+                                    <form method="get" class="row g-3">
+                                        <div class="col-md-3">
+                                            <label for="vehicule" class="form-label">Véhicule</label>
+                                            <select name="vehicule" id="vehicule" class="form-select">
+                                                <option value="">Tous les véhicules</option>
+                                                {% for vehicule in vehicules %}
+                                                    <option value="{{ vehicule.id }}" {% if request.GET.vehicule == vehicule.id|stringformat:"i" %}selected{% endif %}>
+                                                        {{ vehicule.immatriculation }} - {{ vehicule.marque }} {{ vehicule.modele }}
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="chauffeur" class="form-label">Chauffeur</label>
+                                            <select name="chauffeur" id="chauffeur" class="form-select">
+                                                <option value="">Tous les chauffeurs</option>
+                                                {% for chauffeur in chauffeurs %}
+                                                    <option value="{{ chauffeur.id }}" {% if request.GET.chauffeur == chauffeur.id|stringformat:"i" %}selected{% endif %}>
+                                                        {{ chauffeur.get_full_name }}
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label for="date_debut" class="form-label">Date début</label>
+                                            <input type="date" name="date_debut" id="date_debut" class="form-control" value="{{ request.GET.date_debut }}">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label for="date_fin" class="form-label">Date fin</label>
+                                            <input type="date" name="date_fin" id="date_fin" class="form-control" value="{{ request.GET.date_fin }}">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label for="statut" class="form-label">Statut</label>
+                                            <select name="statut" id="statut" class="form-select">
+                                                <option value="">Tous les statuts</option>
+                                                <option value="en_attente" {% if request.GET.statut == 'en_attente' %}selected{% endif %}>En attente</option>
+                                                <option value="validee" {% if request.GET.statut == 'validee' %}selected{% endif %}>Validée</option>
+                                                <option value="refusee" {% if request.GET.statut == 'refusee' %}selected{% endif %}>Refusée</option>
+                                                <option value="en_cours" {% if request.GET.statut == 'en_cours' %}selected{% endif %}>En cours</option>
+                                                <option value="terminee" {% if request.GET.statut == 'terminee' %}selected{% endif %}>Terminée</option>
+                                                <option value="annulee" {% if request.GET.statut == 'annulee' %}selected{% endif %}>Annulée</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-12 text-end">
+                                            <button type="submit" class="btn btn-primary">
+                                                <i class="fas fa-filter me-1"></i>Filtrer
+                                            </button>
+                                            <a href="{% url 'rapport:missions' %}" class="btn btn-secondary">
+                                                <i class="fas fa-undo me-1"></i>Réinitialiser
+                                            </a>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if courses %}
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <span class="text-muted">{{ courses.paginator.count }} mission(s) trouvée(s)</span>
+                        </div>
+                        <div>
+                            <a href="{% url 'rapport:generer_rapport' 'missions' %}?{{ request.GET.urlencode }}&format=pdf" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-file-pdf me-1"></i>Exporter en PDF
+                            </a>
+                            <a href="{% url 'rapport:generer_rapport' 'missions' %}?{{ request.GET.urlencode }}&format=excel" class="btn btn-sm btn-outline-success ms-2">
+                                <i class="fas fa-file-excel me-1"></i>Exporter en Excel
+                            </a>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Date</th>
+                                    <th>Véhicule</th>
+                                    <th>Chauffeur</th>
+                                    <th>Demandeur</th>
+                                    <th>Origine</th>
+                                    <th>Destination</th>
+                                    <th>Distance</th>
+                                    <th>Statut</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for course in courses %}
+                                <tr>
+                                    <td>{{ course.id }}</td>
+                                    <td>{{ course.date_demande|date:"d/m/Y H:i" }}</td>
+                                    <td>
+                                        {% if course.vehicule %}
+                                        {{ course.vehicule.immatriculation }}
+                                        {% else %}
+                                        Non assigné
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if course.chauffeur %}
+                                        {{ course.chauffeur.get_full_name }}
+                                        {% else %}
+                                        Non assigné
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if course.demandeur %}
+                                            {{ course.demandeur.username }} {% if course.demandeur.first_name or course.demandeur.last_name %}({{ course.demandeur.first_name }} {{ course.demandeur.last_name }}){% endif %}
+                                        {% else %}
+                                            Non assigné
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ course.point_embarquement }}</td>
+                                    <td>{{ course.destination }}</td>
+                                    <td>
+                                        {% if course.distance_parcourue %}
+                                        {{ course.distance_parcourue }} km
+                                        {% else %}
+                                        -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if course.statut == 'en_attente' %}
+                                        <span class="badge bg-warning">En attente</span>
+                                        {% elif course.statut == 'validee' %}
+                                        <span class="badge bg-primary">Validée</span>
+                                        {% elif course.statut == 'refusee' %}
+                                        <span class="badge bg-secondary">Refusée</span>
+                                        {% elif course.statut == 'en_cours' %}
+                                        <span class="badge bg-info">En cours</span>
+                                        {% elif course.statut == 'terminee' %}
+                                        <span class="badge bg-success">Terminée</span>
+                                        {% elif course.statut == 'annulee' %}
+                                        <span class="badge bg-danger">Annulée</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">{{ course.statut }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>Aucune mission trouvée.
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Pagination -->
+                    {% if courses.paginator.num_pages > 1 %}
+                    <nav aria-label="Navigation des pages">
+                        <ul class="pagination justify-content-center">
+                            {% if courses.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=1{% if request.GET.vehicule %}&vehicule={{ request.GET.vehicule }}{% endif %}{% if request.GET.chauffeur %}&chauffeur={{ request.GET.chauffeur }}{% endif %}{% if request.GET.date_debut %}&date_debut={{ request.GET.date_debut }}{% endif %}{% if request.GET.date_fin %}&date_fin={{ request.GET.date_fin }}{% endif %}{% if request.GET.statut %}&statut={{ request.GET.statut }}{% endif %}" aria-label="Première">
+                                        <span aria-hidden="true">&laquo;&laquo;</span>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ courses.previous_page_number }}{% if request.GET.vehicule %}&vehicule={{ request.GET.vehicule }}{% endif %}{% if request.GET.chauffeur %}&chauffeur={{ request.GET.chauffeur }}{% endif %}{% if request.GET.date_debut %}&date_debut={{ request.GET.date_debut }}{% endif %}{% if request.GET.date_fin %}&date_fin={{ request.GET.date_fin }}{% endif %}{% if request.GET.statut %}&statut={{ request.GET.statut }}{% endif %}" aria-label="Précédente">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" aria-label="Première">
+                                        <span aria-hidden="true">&laquo;&laquo;</span>
+                                    </a>
+                                </li>
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" aria-label="Précédente">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                            {% endif %}
+                            
+                            {% for i in courses.paginator.page_range %}
+                                {% if courses.number == i %}
+                                    <li class="page-item active"><a class="page-link" href="#">{{ i }}</a></li>
+                                {% elif i > courses.number|add:'-3' and i < courses.number|add:'3' %}
+                                    <li class="page-item"><a class="page-link" href="?page={{ i }}{% if request.GET.vehicule %}&vehicule={{ request.GET.vehicule }}{% endif %}{% if request.GET.chauffeur %}&chauffeur={{ request.GET.chauffeur }}{% endif %}{% if request.GET.date_debut %}&date_debut={{ request.GET.date_debut }}{% endif %}{% if request.GET.date_fin %}&date_fin={{ request.GET.date_fin }}{% endif %}{% if request.GET.statut %}&statut={{ request.GET.statut }}{% endif %}">{{ i }}</a></li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if courses.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ courses.next_page_number }}{% if request.GET.vehicule %}&vehicule={{ request.GET.vehicule }}{% endif %}{% if request.GET.chauffeur %}&chauffeur={{ request.GET.chauffeur }}{% endif %}{% if request.GET.date_debut %}&date_debut={{ request.GET.date_debut }}{% endif %}{% if request.GET.date_fin %}&date_fin={{ request.GET.date_fin }}{% endif %}{% if request.GET.statut %}&statut={{ request.GET.statut }}{% endif %}" aria-label="Suivante">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ courses.paginator.num_pages }}{% if request.GET.vehicule %}&vehicule={{ request.GET.vehicule }}{% endif %}{% if request.GET.chauffeur %}&chauffeur={{ request.GET.chauffeur }}{% endif %}{% if request.GET.date_debut %}&date_debut={{ request.GET.date_debut }}{% endif %}{% if request.GET.date_fin %}&date_fin={{ request.GET.date_fin }}{% endif %}{% if request.GET.statut %}&statut={{ request.GET.statut }}{% endif %}" aria-label="Dernière">
+                                        <span aria-hidden="true">&raquo;&raquo;</span>
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" aria-label="Suivante">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" aria-label="Dernière">
+                                        <span aria-hidden="true">&raquo;&raquo;</span>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    <div class="text-center text-muted small">
+                        Page {{ courses.number }} sur {{ courses.paginator.num_pages }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialiser les sélecteurs avec Select2 pour une meilleure expérience utilisateur
+        if (typeof $.fn.select2 !== 'undefined') {
+            $('#vehicule, #chauffeur, #statut').select2({
+                theme: 'bootstrap-5',
+                width: '100%'
+            });
+        }
+    });
+</script>
+{% endblock %} 

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Suivi de la Consommation de Carburant</title>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 2cm;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 10px;
+            line-height: 1.4;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .company-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        .info {
+            font-size: 10px;
+            margin-bottom: 20px;
+            text-align: right;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 6px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 10px;
+            padding: 10px 0;
+        }
+        .summary {
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #f2f2f2;
+            border-radius: 5px;
+        }
+        .summary-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .summary-item {
+            margin-bottom: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="company-name">ASOFES</div>
+        <div class="title">SUIVI DE LA CONSOMMATION DE CARBURANT</div>
+        <div class="subtitle">Rapport généré le {{ date_generation|date:"d/m/Y à H:i" }}</div>
+    </div>
+    
+    <div class="info">
+        <p>Généré par: {{ user.first_name }} {{ user.last_name }}</p>
+        <p>Demandeur: {{ user.username }}</p>
+    </div>
+    
+    <div class="summary">
+        <div class="summary-title">Résumé:</div>
+        <div class="summary-item">Nombre total de ravitaillements: {{ ravitaillements.count }}</div>
+        <div class="summary-item">Volume total de carburant: {{ total_litres|floatformat:2 }} litres</div>
+        <div class="summary-item">Coût total: {{ total_cout|floatformat:2 }} $</div>
+    </div>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Véhicule</th>
+                <th>Station</th>
+                <th>Kilométrage</th>
+                <th>Distance</th>
+                <th>Litres</th>
+                <th>Prix/L</th>
+                <th>Coût total</th>
+                <th>Conso. (L/100km)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ravitaillement in ravitaillements %}
+            <tr>
+                <td>{{ ravitaillement.date_ravitaillement|date:"d/m/Y H:i" }}</td>
+                <td>{{ ravitaillement.vehicule.immatriculation }}</td>
+                <td>{{ ravitaillement.nom_station|default:"Non spécifiée" }}</td>
+                <td>{{ ravitaillement.kilometrage_apres }} km</td>
+                <td>{{ ravitaillement.distance_parcourue }} km</td>
+                <td>{{ ravitaillement.litres }} L</td>
+                <td>{{ ravitaillement.cout_unitaire }} $/L</td>
+                <td>{{ ravitaillement.cout_total }} $</td>
+                <td>
+                    {% if ravitaillement.consommation_moyenne > 0 %}
+                        {{ ravitaillement.consommation_moyenne|floatformat:2 }} L/100km
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="5"><strong>TOTAL</strong></td>
+                <td><strong>{{ total_litres|floatformat:2 }} L</strong></td>
+                <td></td>
+                <td><strong>{{ total_cout|floatformat:2 }} $</strong></td>
+                <td></td>
+            </tr>
+        </tfoot>
+    </table>
+    
+    <div class="footer">
+        <p>© {{ date_generation|date:"Y" }} - Système de Gestion des Véhicules</p>
+    </div>
+</body>
+</html> 

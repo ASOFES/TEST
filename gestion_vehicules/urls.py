@@ -30,9 +30,10 @@ urlpatterns = [
     path('ravitaillement/', include('ravitaillement.urls')),
     path('suivi/', include('suivi.urls')),
     path('rapport/', include('rapport.urls')),
+    path('notifications/', include('notifications.urls')),
+    path('chat/', include('chat.urls')),
 ]
 
-# Ajouter les URLs pour les fichiers médias et statiques en mode développement
+# Serve media files in development
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])

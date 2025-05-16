@@ -1,0 +1,226 @@
+[
+{
+    "model": "notifications.notification",
+    "pk": 1,
+    "fields": {
+        "destinataire": 4,
+        "type_notification": "sms",
+        "titre": "Nouvelle demande de course #2",
+        "message": " a créé une nouvelle demande de course de KIBATI à VILLE.",
+        "date_creation": "2025-05-13T06:13:27.991Z",
+        "date_envoi": null,
+        "statut": "failed",
+        "erreur": "\n\u001b[31m\u001b[49mHTTP Error\u001b[0m \u001b[37m\u001b[49mYour request was:\u001b[0m\n\n\u001b[36m\u001b[49mPOST /Accounts/None/Messages.json\u001b[0m\n\n\u001b[37m\u001b[49mTwilio returned the following information:\u001b[0m\n\n\u001b[34m\u001b[49mUnable to create record: Authentication Error - No credentials provided\u001b[0m\n\n\u001b[37m\u001b[49mMore information may be available here:\u001b[0m\n\n\u001b[34m\u001b[49mhttps://www.twilio.com/docs/errors/20003\u001b[0m\n\n",
+        "course": 2,
+        "vehicule": null
+    }
+},
+{
+    "model": "notifications.notification",
+    "pk": 2,
+    "fields": {
+        "destinataire": 4,
+        "type_notification": "whatsapp",
+        "titre": "Nouvelle demande de course #2",
+        "message": " a créé une nouvelle demande de course de KIBATI à VILLE.",
+        "date_creation": "2025-05-13T06:13:29.410Z",
+        "date_envoi": null,
+        "statut": "failed",
+        "erreur": "\n\u001b[31m\u001b[49mHTTP Error\u001b[0m \u001b[37m\u001b[49mYour request was:\u001b[0m\n\n\u001b[36m\u001b[49mPOST /Accounts/None/Messages.json\u001b[0m\n\n\u001b[37m\u001b[49mTwilio returned the following information:\u001b[0m\n\n\u001b[34m\u001b[49mUnable to create record: Authentication Error - No credentials provided\u001b[0m\n\n\u001b[37m\u001b[49mMore information may be available here:\u001b[0m\n\n\u001b[34m\u001b[49mhttps://www.twilio.com/docs/errors/20003\u001b[0m\n\n",
+        "course": 2,
+        "vehicule": null
+    }
+},
+{
+    "model": "notifications.notification",
+    "pk": 3,
+    "fields": {
+        "destinataire": 4,
+        "type_notification": "email",
+        "titre": "Nouvelle demande de course #2",
+        "message": " a créé une nouvelle demande de course de KIBATI à VILLE.",
+        "date_creation": "2025-05-13T06:13:30.387Z",
+        "date_envoi": "2025-05-13T06:13:30.428Z",
+        "statut": "delivered",
+        "erreur": null,
+        "course": 2,
+        "vehicule": null
+    }
+},
+{
+    "model": "notifications.notification",
+    "pk": 4,
+    "fields": {
+        "destinataire": 2,
+        "type_notification": "email",
+        "titre": "Votre demande de course #2 a été validée",
+        "message": "Votre demande de course de KIBATI à VILLE a été validée. Chauffeur assigné: junior kabeya1.",
+        "date_creation": "2025-05-13T06:20:10.395Z",
+        "date_envoi": "2025-05-13T06:20:10.413Z",
+        "statut": "delivered",
+        "erreur": null,
+        "course": 2,
+        "vehicule": null
+    }
+},
+{
+    "model": "notifications.notification",
+    "pk": 5,
+    "fields": {
+        "destinataire": 3,
+        "type_notification": "sms",
+        "titre": "Nouvelle course assignée #2",
+        "message": "Une nouvelle course vous a été assignée de KIBATI à VILLE.",
+        "date_creation": "2025-05-13T06:20:10.455Z",
+        "date_envoi": null,
+        "statut": "failed",
+        "erreur": "\n\u001b[31m\u001b[49mHTTP Error\u001b[0m \u001b[37m\u001b[49mYour request was:\u001b[0m\n\n\u001b[36m\u001b[49mPOST /Accounts/None/Messages.json\u001b[0m\n\n\u001b[37m\u001b[49mTwilio returned the following information:\u001b[0m\n\n\u001b[34m\u001b[49mUnable to create record: Authentication Error - No credentials provided\u001b[0m\n\n\u001b[37m\u001b[49mMore information may be available here:\u001b[0m\n\n\u001b[34m\u001b[49mhttps://www.twilio.com/docs/errors/20003\u001b[0m\n\n",
+        "course": 2,
+        "vehicule": null
+    }
+},
+{
+    "model": "notifications.notification",
+    "pk": 6,
+    "fields": {
+        "destinataire": 3,
+        "type_notification": "whatsapp",
+        "titre": "Nouvelle course assignée #2",
+        "message": "Une nouvelle course vous a été assignée de KIBATI à VILLE.",
+        "date_creation": "2025-05-13T06:20:11.477Z",
+        "date_envoi": null,
+        "statut": "failed",
+        "erreur": "\n\u001b[31m\u001b[49mHTTP Error\u001b[0m \u001b[37m\u001b[49mYour request was:\u001b[0m\n\n\u001b[36m\u001b[49mPOST /Accounts/None/Messages.json\u001b[0m\n\n\u001b[37m\u001b[49mTwilio returned the following information:\u001b[0m\n\n\u001b[34m\u001b[49mUnable to create record: Authentication Error - No credentials provided\u001b[0m\n\n\u001b[37m\u001b[49mMore information may be available here:\u001b[0m\n\n\u001b[34m\u001b[49mhttps://www.twilio.com/docs/errors/20003\u001b[0m\n\n",
+        "course": 2,
+        "vehicule": null
+    }
+},
+{
+    "model": "notifications.notification",
+    "pk": 7,
+    "fields": {
+        "destinataire": 3,
+        "type_notification": "email",
+        "titre": "Nouvelle course assignée #2",
+        "message": "Une nouvelle course vous a été assignée de KIBATI à VILLE.",
+        "date_creation": "2025-05-13T06:20:12.525Z",
+        "date_envoi": "2025-05-13T06:20:12.540Z",
+        "statut": "sent",
+        "erreur": null,
+        "course": 2,
+        "vehicule": null
+    }
+},
+{
+    "model": "notifications.notification",
+    "pk": 8,
+    "fields": {
+        "destinataire": 4,
+        "type_notification": "sms",
+        "titre": "Nouvelle demande de course #3",
+        "message": " a créé une nouvelle demande de course de KIBATI à KOLWEZI.",
+        "date_creation": "2025-05-13T06:50:36.935Z",
+        "date_envoi": null,
+        "statut": "failed",
+        "erreur": "\n\u001b[31m\u001b[49mHTTP Error\u001b[0m \u001b[37m\u001b[49mYour request was:\u001b[0m\n\n\u001b[36m\u001b[49mPOST /Accounts/None/Messages.json\u001b[0m\n\n\u001b[37m\u001b[49mTwilio returned the following information:\u001b[0m\n\n\u001b[34m\u001b[49mUnable to create record: Authentication Error - No credentials provided\u001b[0m\n\n\u001b[37m\u001b[49mMore information may be available here:\u001b[0m\n\n\u001b[34m\u001b[49mhttps://www.twilio.com/docs/errors/20003\u001b[0m\n\n",
+        "course": 3,
+        "vehicule": null
+    }
+},
+{
+    "model": "notifications.notification",
+    "pk": 9,
+    "fields": {
+        "destinataire": 4,
+        "type_notification": "whatsapp",
+        "titre": "Nouvelle demande de course #3",
+        "message": " a créé une nouvelle demande de course de KIBATI à KOLWEZI.",
+        "date_creation": "2025-05-13T06:50:37.982Z",
+        "date_envoi": null,
+        "statut": "failed",
+        "erreur": "\n\u001b[31m\u001b[49mHTTP Error\u001b[0m \u001b[37m\u001b[49mYour request was:\u001b[0m\n\n\u001b[36m\u001b[49mPOST /Accounts/None/Messages.json\u001b[0m\n\n\u001b[37m\u001b[49mTwilio returned the following information:\u001b[0m\n\n\u001b[34m\u001b[49mUnable to create record: Authentication Error - No credentials provided\u001b[0m\n\n\u001b[37m\u001b[49mMore information may be available here:\u001b[0m\n\n\u001b[34m\u001b[49mhttps://www.twilio.com/docs/errors/20003\u001b[0m\n\n",
+        "course": 3,
+        "vehicule": null
+    }
+},
+{
+    "model": "notifications.notification",
+    "pk": 10,
+    "fields": {
+        "destinataire": 4,
+        "type_notification": "email",
+        "titre": "Nouvelle demande de course #3",
+        "message": " a créé une nouvelle demande de course de KIBATI à KOLWEZI.",
+        "date_creation": "2025-05-13T06:50:38.835Z",
+        "date_envoi": "2025-05-13T06:50:38.842Z",
+        "statut": "sent",
+        "erreur": null,
+        "course": 3,
+        "vehicule": null
+    }
+},
+{
+    "model": "notifications.notification",
+    "pk": 11,
+    "fields": {
+        "destinataire": 2,
+        "type_notification": "email",
+        "titre": "Votre demande de course #3 a été validée",
+        "message": "Votre demande de course de KIBATI à KOLWEZI a été validée. Chauffeur assigné: junior kabeya1.",
+        "date_creation": "2025-05-13T06:53:20.821Z",
+        "date_envoi": "2025-05-13T06:53:20.830Z",
+        "statut": "delivered",
+        "erreur": null,
+        "course": 3,
+        "vehicule": null
+    }
+},
+{
+    "model": "notifications.notification",
+    "pk": 12,
+    "fields": {
+        "destinataire": 3,
+        "type_notification": "sms",
+        "titre": "Nouvelle course assignée #3",
+        "message": "Une nouvelle course vous a été assignée de KIBATI à KOLWEZI.",
+        "date_creation": "2025-05-13T06:53:20.837Z",
+        "date_envoi": null,
+        "statut": "failed",
+        "erreur": "\n\u001b[31m\u001b[49mHTTP Error\u001b[0m \u001b[37m\u001b[49mYour request was:\u001b[0m\n\n\u001b[36m\u001b[49mPOST /Accounts/None/Messages.json\u001b[0m\n\n\u001b[37m\u001b[49mTwilio returned the following information:\u001b[0m\n\n\u001b[34m\u001b[49mUnable to create record: Authentication Error - No credentials provided\u001b[0m\n\n\u001b[37m\u001b[49mMore information may be available here:\u001b[0m\n\n\u001b[34m\u001b[49mhttps://www.twilio.com/docs/errors/20003\u001b[0m\n\n",
+        "course": 3,
+        "vehicule": null
+    }
+},
+{
+    "model": "notifications.notification",
+    "pk": 13,
+    "fields": {
+        "destinataire": 3,
+        "type_notification": "whatsapp",
+        "titre": "Nouvelle course assignée #3",
+        "message": "Une nouvelle course vous a été assignée de KIBATI à KOLWEZI.",
+        "date_creation": "2025-05-13T06:53:22.589Z",
+        "date_envoi": null,
+        "statut": "failed",
+        "erreur": "\n\u001b[31m\u001b[49mHTTP Error\u001b[0m \u001b[37m\u001b[49mYour request was:\u001b[0m\n\n\u001b[36m\u001b[49mPOST /Accounts/None/Messages.json\u001b[0m\n\n\u001b[37m\u001b[49mTwilio returned the following information:\u001b[0m\n\n\u001b[34m\u001b[49mUnable to create record: Authentication Error - No credentials provided\u001b[0m\n\n\u001b[37m\u001b[49mMore information may be available here:\u001b[0m\n\n\u001b[34m\u001b[49mhttps://www.twilio.com/docs/errors/20003\u001b[0m\n\n",
+        "course": 3,
+        "vehicule": null
+    }
+},
+{
+    "model": "notifications.notification",
+    "pk": 14,
+    "fields": {
+        "destinataire": 3,
+        "type_notification": "email",
+        "titre": "Nouvelle course assignée #3",
+        "message": "Une nouvelle course vous a été assignée de KIBATI à KOLWEZI.",
+        "date_creation": "2025-05-13T06:53:23.550Z",
+        "date_envoi": "2025-05-13T06:53:23.561Z",
+        "statut": "sent",
+        "erreur": null,
+        "course": 3,
+        "vehicule": null
+    }
+}
+]

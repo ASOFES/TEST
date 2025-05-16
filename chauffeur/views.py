@@ -6,13 +6,14 @@ from django.db.models import Q
 from django.utils import timezone
 from core.models import Course, ActionTraceur
 from .forms import DemarrerMissionForm, TerminerMissionForm
+from notifications.utils import notify_user, send_sms, send_whatsapp
 import datetime
 
 @login_required
 def dashboard(request):
     """Vue pour le tableau de bord du chauffeur"""
-    # Vérifier que l'utilisateur est bien un chauffeur
-    if request.user.role != 'chauffeur':
+    # Vérifier que l'utilisateur est bien un chauffeur, un admin ou un superuser
+    if request.user.role != 'chauffeur' and request.user.role != 'admin' and not request.user.is_superuser:
         messages.error(request, "Vous n'avez pas les droits pour accéder à cette page.")
         return redirect('home')
     
@@ -20,6 +21,12 @@ def dashboard(request):
     missions = Course.objects.select_related('demandeur', 'vehicule', 'dispatcher').filter(chauffeur=request.user).filter(
         Q(statut='validee') | Q(statut='en_cours') | Q(statut='terminee')
     ).order_by('-date_validation')
+    
+    # Si l'utilisateur est admin ou superuser, montrer toutes les missions
+    if request.user.role == 'admin' or request.user.is_superuser:
+        missions = Course.objects.select_related('demandeur', 'vehicule', 'dispatcher').filter(
+            Q(statut='validee') | Q(statut='en_cours') | Q(statut='terminee')
+        ).order_by('-date_validation')
     
     # Filtres
     statut = request.GET.get('statut')
@@ -43,12 +50,20 @@ def dashboard(request):
     missions_page = paginator.get_page(page_number)
     
     # Statistiques
-    stats = {
-        'total': Course.objects.filter(chauffeur=request.user).count(),
-        'a_effectuer': Course.objects.filter(chauffeur=request.user, statut='validee').count(),
-        'en_cours': Course.objects.filter(chauffeur=request.user, statut='en_cours').count(),
-        'terminees': Course.objects.filter(chauffeur=request.user, statut='terminee').count(),
-    }
+    if request.user.role == 'admin' or request.user.is_superuser:
+        stats = {
+            'total': Course.objects.filter(Q(statut='validee') | Q(statut='en_cours') | Q(statut='terminee')).count(),
+            'a_effectuer': Course.objects.filter(statut='validee').count(),
+            'en_cours': Course.objects.filter(statut='en_cours').count(),
+            'terminees': Course.objects.filter(statut='terminee').count(),
+        }
+    else:
+        stats = {
+            'total': Course.objects.filter(chauffeur=request.user).count(),
+            'a_effectuer': Course.objects.filter(chauffeur=request.user, statut='validee').count(),
+            'en_cours': Course.objects.filter(chauffeur=request.user, statut='en_cours').count(),
+            'terminees': Course.objects.filter(chauffeur=request.user, statut='terminee').count(),
+        }
     
     context = {
         'missions': missions_page,
@@ -60,14 +75,18 @@ def dashboard(request):
 @login_required
 def detail_mission(request, mission_id):
     """Vue pour afficher les détails d'une mission"""
-    # Vérifier que l'utilisateur est bien un chauffeur
-    if request.user.role != 'chauffeur':
+    # Vérifier que l'utilisateur est bien un chauffeur, un admin ou un superuser
+    if request.user.role != 'chauffeur' and request.user.role != 'admin' and not request.user.is_superuser:
         messages.error(request, "Vous n'avez pas les droits pour accéder à cette page.")
         return redirect('home')
     
-    mission = get_object_or_404(Course.objects.select_related('demandeur', 'vehicule', 'dispatcher'), id=mission_id, chauffeur=request.user)
+    # Si l'utilisateur est admin ou superuser, permettre l'accès à toutes les missions
+    if request.user.role == 'admin' or request.user.is_superuser:
+        mission = get_object_or_404(Course.objects.select_related('demandeur', 'vehicule', 'dispatcher'), id=mission_id)
+    else:
+        mission = get_object_or_404(Course.objects.select_related('demandeur', 'vehicule', 'dispatcher'), id=mission_id, chauffeur=request.user)
     
-    # Vérifier que la mission est bien assignée au chauffeur et dans un état valide
+    # Vérifier que la mission est bien dans un état valide
     if mission.statut not in ['validee', 'en_cours', 'terminee']:
         messages.error(request, "Vous n'avez pas accès à cette mission.")
         return redirect('chauffeur:dashboard')
@@ -89,12 +108,17 @@ def detail_mission(request, mission_id):
 @login_required
 def demarrer_mission(request, mission_id):
     """Vue pour démarrer une mission"""
-    # Vérifier que l'utilisateur est bien un chauffeur
-    if request.user.role != 'chauffeur':
+    # Vérifier que l'utilisateur est bien un chauffeur, un admin ou un superuser
+    if request.user.role != 'chauffeur' and request.user.role != 'admin' and not request.user.is_superuser:
         messages.error(request, "Vous n'avez pas les droits pour accéder à cette page.")
         return redirect('home')
     
-    mission = get_object_or_404(Course, id=mission_id, chauffeur=request.user, statut='validee')
+    # Si l'utilisateur est admin ou superuser, permettre l'accès à toutes les missions
+    if request.user.role == 'admin' or request.user.is_superuser:
+        mission = get_object_or_404(Course, id=mission_id, statut='validee')
+    else:
+        mission = get_object_or_404(Course, id=mission_id, chauffeur=request.user, statut='validee')
+    
     vehicule = mission.vehicule
     
     if request.method == 'POST':
@@ -121,6 +145,29 @@ def demarrer_mission(request, mission_id):
                 details=action_details
             )
             
+            # Message pour le demandeur
+            demandeur_title = f"Votre course #{mission.id} a démarré"
+            demandeur_message = f"Votre course de {mission.point_embarquement} à {mission.destination} a démarré. Chauffeur: {mission.chauffeur.get_full_name()}"
+            
+            # Notification interne au demandeur
+            notify_user(
+                mission.demandeur,
+                demandeur_title,
+                demandeur_message,
+                notification_type='all',
+                course=mission
+            )
+            
+            # Notification par SMS au demandeur
+            if mission.demandeur.telephone:
+                sms_message = f"{demandeur_title}\n{demandeur_message}"
+                send_sms(mission.demandeur.telephone, sms_message)
+            
+            # Notification par WhatsApp au demandeur
+            if mission.demandeur.telephone:
+                whatsapp_message = f"*{demandeur_title}*\n\n{demandeur_message}"
+                send_whatsapp(mission.demandeur.telephone, whatsapp_message)
+            
             messages.success(request, f'La mission #{mission.id} a été démarrée avec succès.')
             return redirect('chauffeur:detail_mission', mission.id)
     else:
@@ -139,18 +186,26 @@ def demarrer_mission(request, mission_id):
 @login_required
 def terminer_mission(request, mission_id):
     """Vue pour terminer une mission"""
-    # Vérifier que l'utilisateur est bien un chauffeur
-    if request.user.role != 'chauffeur':
+    # Vérifier que l'utilisateur est bien un chauffeur, un admin ou un superuser
+    if request.user.role != 'chauffeur' and request.user.role != 'admin' and not request.user.is_superuser:
         messages.error(request, "Vous n'avez pas les droits pour accéder à cette page.")
         return redirect('home')
     
     try:
-        # Utiliser select_related pour optimiser la requête
-        mission = Course.objects.select_related('demandeur', 'vehicule').get(id=mission_id, chauffeur=request.user, statut='en_cours')
+        # Si l'utilisateur est admin ou superuser, permettre l'accès à toutes les missions
+        if request.user.role == 'admin' or request.user.is_superuser:
+            # Utiliser select_related pour optimiser la requête
+            mission = Course.objects.select_related('demandeur', 'vehicule').get(id=mission_id, statut='en_cours')
+        else:
+            # Utiliser select_related pour optimiser la requête
+            mission = Course.objects.select_related('demandeur', 'vehicule').get(id=mission_id, chauffeur=request.user, statut='en_cours')
     except Course.DoesNotExist:
         # Vérifier si la mission existe mais n'est pas en cours
         try:
-            mission_status = Course.objects.values_list('statut', flat=True).get(id=mission_id, chauffeur=request.user)
+            if request.user.role == 'admin' or request.user.is_superuser:
+                mission_status = Course.objects.values_list('statut', flat=True).get(id=mission_id)
+            else:
+                mission_status = Course.objects.values_list('statut', flat=True).get(id=mission_id, chauffeur=request.user)
             messages.error(request, f"La mission #{mission_id} ne peut pas être terminée car son statut actuel est '{mission_status}'")
         except Course.DoesNotExist:
             messages.error(request, f"La mission #{mission_id} n'existe pas ou n'est pas assignée à ce chauffeur.")
@@ -180,6 +235,29 @@ def terminer_mission(request, mission_id):
                 action="Fin de mission",
                 details=action_details
             )
+            
+            # Message pour le demandeur
+            demandeur_title = f"Votre course #{mission.id} est terminée"
+            demandeur_message = f"Votre course de {mission.point_embarquement} à {mission.destination} est terminée. Distance parcourue: {mission.distance_parcourue} km."
+            
+            # Notification interne au demandeur
+            notify_user(
+                mission.demandeur,
+                demandeur_title,
+                demandeur_message,
+                notification_type='all',
+                course=mission
+            )
+            
+            # Notification par SMS au demandeur
+            if mission.demandeur.telephone:
+                sms_message = f"{demandeur_title}\n{demandeur_message}"
+                send_sms(mission.demandeur.telephone, sms_message)
+            
+            # Notification par WhatsApp au demandeur
+            if mission.demandeur.telephone:
+                whatsapp_message = f"*{demandeur_title}*\n\n{demandeur_message}\n\nMerci d'avoir utilisé notre service."
+                send_whatsapp(mission.demandeur.telephone, whatsapp_message)
             
             # Mettre à jour la distance journalière
             from .models import DistanceJournaliere

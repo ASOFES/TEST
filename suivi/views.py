@@ -4,6 +4,17 @@ from django.contrib import messages
 from core.models import Vehicule, Course, ActionTraceur
 from entretien.models import Entretien
 from ravitaillement.models import Ravitaillement
+from .models import SuiviVehicule
+from django.db.models import Sum, Count, Q
+from django.http import HttpResponse
+import csv
+import xlwt
+from django.template.loader import get_template
+from xhtml2pdf import pisa
+from io import BytesIO
+from django.utils import timezone
+from django.conf import settings
+from django.core.paginator import Paginator
 
 # Fonction pour vérifier si l'utilisateur est admin ou superuser
 def is_admin_or_superuser(user):
@@ -40,6 +51,62 @@ def suivi_vehicules(request):
     """Vue pour le suivi des véhicules"""
     vehicules = Vehicule.objects.all()
     
+    # Recherche
+    search_query = request.GET.get('search', '')
+    if search_query:
+        vehicules = vehicules.filter(
+            Q(immatriculation__icontains=search_query) |
+            Q(marque__icontains=search_query) |
+            Q(modele__icontains=search_query)
+        )
+    
+    # Tri
+    sort_by = request.GET.get('sort', 'immatriculation')
+    if sort_by.startswith('-'):
+        sort_field = sort_by[1:]  # Enlever le - pour le traitement
+        reverse_sort = True
+    else:
+        sort_field = sort_by
+        reverse_sort = False
+    
+    # Préparer les données de suivi pour chaque véhicule
+    vehicules_data = []
+    for vehicule in vehicules:
+        # Calculer la distance totale parcourue
+        distance_totale = Course.objects.filter(
+            vehicule=vehicule, 
+            statut='terminee'
+        ).aggregate(Sum('distance_parcourue'))['distance_parcourue__sum'] or 0
+        
+        # Calculer le nombre d'entretiens
+        nombre_entretiens = Entretien.objects.filter(vehicule=vehicule).count()
+        
+        # Calculer le volume de carburant consommé
+        volume_carburant = Ravitaillement.objects.filter(
+            vehicule=vehicule
+        ).aggregate(Sum('litres'))['litres__sum'] or 0
+        
+        vehicules_data.append({
+            'vehicule': vehicule,
+            'distance_totale': distance_totale,
+            'nombre_entretiens': nombre_entretiens,
+            'volume_carburant': volume_carburant
+        })
+    
+    # Tri des données
+    if sort_field == 'immatriculation':
+        vehicules_data.sort(key=lambda x: x['vehicule'].immatriculation, reverse=reverse_sort)
+    elif sort_field == 'marque':
+        vehicules_data.sort(key=lambda x: x['vehicule'].marque, reverse=reverse_sort)
+    elif sort_field == 'date_immatriculation':
+        vehicules_data.sort(key=lambda x: x['vehicule'].date_immatriculation or timezone.datetime.min.date(), reverse=reverse_sort)
+    elif sort_field == 'distance_totale':
+        vehicules_data.sort(key=lambda x: x['distance_totale'], reverse=reverse_sort)
+    elif sort_field == 'nombre_entretiens':
+        vehicules_data.sort(key=lambda x: x['nombre_entretiens'], reverse=reverse_sort)
+    elif sort_field == 'volume_carburant':
+        vehicules_data.sort(key=lambda x: x['volume_carburant'], reverse=reverse_sort)
+    
     # Tracer l'action
     ActionTraceur.objects.create(
         utilisateur=request.user,
@@ -47,16 +114,179 @@ def suivi_vehicules(request):
     )
     
     context = {
-        'vehicules': vehicules,
+        'vehicules_data': vehicules_data,
     }
     
     return render(request, 'suivi/suivi_vehicules.html', context)
 
 @login_required
 @user_passes_test(is_admin_or_superuser)
+def export_vehicules_pdf(request):
+    """Exporter la liste des véhicules en PDF"""
+    # Récupérer les données
+    vehicules = Vehicule.objects.all()
+    vehicules_data = []
+    
+    for vehicule in vehicules:
+        # Calculer la distance totale parcourue
+        distance_totale = Course.objects.filter(
+            vehicule=vehicule, 
+            statut='terminee'
+        ).aggregate(Sum('distance_parcourue'))['distance_parcourue__sum'] or 0
+        
+        # Calculer le nombre d'entretiens
+        nombre_entretiens = Entretien.objects.filter(vehicule=vehicule).count()
+        
+        # Calculer le volume de carburant consommé
+        volume_carburant = Ravitaillement.objects.filter(
+            vehicule=vehicule
+        ).aggregate(Sum('litres'))['litres__sum'] or 0
+        
+        vehicules_data.append({
+            'vehicule': vehicule,
+            'distance_totale': distance_totale,
+            'nombre_entretiens': nombre_entretiens,
+            'volume_carburant': volume_carburant
+        })
+    
+    # Préparer le contexte pour le template
+    context = {
+        'vehicules_data': vehicules_data,
+        'date_generation': timezone.now(),
+        'user': request.user,
+        'logo_path': request.build_absolute_uri(settings.STATIC_URL + 'images/logo.png')
+    }
+    
+    # Charger le template
+    template = get_template('suivi/pdf/vehicules_pdf.html')
+    html = template.render(context)
+    
+    # Créer le PDF
+    result = BytesIO()
+    pdf = pisa.pisaDocument(BytesIO(html.encode("UTF-8")), result)
+    
+    # Tracer l'action
+    ActionTraceur.objects.create(
+        utilisateur=request.user,
+        action="Export PDF du suivi des véhicules",
+    )
+    
+    if not pdf.err:
+        response = HttpResponse(result.getvalue(), content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="suivi_vehicules.pdf"'
+        return response
+    
+    return HttpResponse("Erreur lors de la génération du PDF", status=400)
+
+@login_required
+@user_passes_test(is_admin_or_superuser)
+def export_vehicules_excel(request):
+    """Exporter la liste des véhicules en Excel"""
+    # Créer un nouveau classeur Excel
+    wb = xlwt.Workbook(encoding='utf-8')
+    ws = wb.add_sheet('Suivi Véhicules')
+    
+    # Définir les styles
+    header_style = xlwt.easyxf('font: bold on; pattern: pattern solid, fore_colour gray25; align: horiz center')
+    date_style = xlwt.easyxf('font: bold off; align: horiz right', num_format_str='DD/MM/YYYY')
+    number_style = xlwt.easyxf('font: bold off; align: horiz right')
+    
+    # Écrire les en-têtes
+    headers = ['Immatriculation', 'Marque', 'Modèle', 'Date Immatriculation', 'Distance Parcourue (km)', 'Nombre Entretiens', 'Volume Carburant (L)', 'Statut']
+    for col_num, header in enumerate(headers):
+        ws.write(0, col_num, header, header_style)
+        ws.col(col_num).width = 256 * 20  # 20 caractères de large
+    
+    # Récupérer les données
+    vehicules = Vehicule.objects.all()
+    row_num = 1
+    
+    for vehicule in vehicules:
+        # Calculer la distance totale parcourue
+        distance_totale = Course.objects.filter(
+            vehicule=vehicule, 
+            statut='terminee'
+        ).aggregate(Sum('distance_parcourue'))['distance_parcourue__sum'] or 0
+        
+        # Calculer le nombre d'entretiens
+        nombre_entretiens = Entretien.objects.filter(vehicule=vehicule).count()
+        
+        # Calculer le volume de carburant consommé
+        volume_carburant = Ravitaillement.objects.filter(
+            vehicule=vehicule
+        ).aggregate(Sum('litres'))['litres__sum'] or 0
+        
+        # Écrire les données
+        ws.write(row_num, 0, vehicule.immatriculation)
+        ws.write(row_num, 1, vehicule.marque)
+        ws.write(row_num, 2, vehicule.modele)
+        if vehicule.date_immatriculation:
+            ws.write(row_num, 3, vehicule.date_immatriculation, date_style)
+        else:
+            ws.write(row_num, 3, "Non renseignée")
+        ws.write(row_num, 4, distance_totale, number_style)
+        ws.write(row_num, 5, nombre_entretiens, number_style)
+        ws.write(row_num, 6, float(volume_carburant), number_style)
+        ws.write(row_num, 7, "Disponible" if vehicule.est_disponible() else "Indisponible")
+        
+        row_num += 1
+    
+    # Tracer l'action
+    ActionTraceur.objects.create(
+        utilisateur=request.user,
+        action="Export Excel du suivi des véhicules",
+    )
+    
+    # Préparer la réponse
+    response = HttpResponse(content_type='application/ms-excel')
+    response['Content-Disposition'] = 'attachment; filename="suivi_vehicules.xls"'
+    
+    # Sauvegarder le classeur dans la réponse
+    wb.save(response)
+    
+    return response
+
+@login_required
+@user_passes_test(is_admin_or_superuser)
 def suivi_missions(request):
     """Vue pour le suivi des missions"""
-    courses = Course.objects.all().order_by('-date_demande')
+    # Récupérer toutes les courses
+    courses = Course.objects.all()
+    
+    # Recherche
+    search_query = request.GET.get('search', '')
+    if search_query:
+        courses = courses.filter(
+            Q(demandeur__first_name__icontains=search_query) |
+            Q(demandeur__last_name__icontains=search_query) |
+            Q(destination__icontains=search_query) |
+            Q(vehicule__immatriculation__icontains=search_query) |
+            Q(chauffeur__first_name__icontains=search_query) |
+            Q(chauffeur__last_name__icontains=search_query)
+        )
+    
+    # Tri
+    sort_by = request.GET.get('sort', '-date_demande')
+    # Valider le paramètre de tri pour éviter les injections SQL
+    valid_sort_fields = [
+        'date_demande', '-date_demande',
+        'demandeur__last_name', '-demandeur__last_name',
+        'destination', '-destination',
+        'statut', '-statut'
+    ]
+    
+    if sort_by not in valid_sort_fields:
+        sort_by = '-date_demande'  # Valeur par défaut sécurisée
+        
+    courses = courses.order_by(sort_by)
+    
+    # Calculer la distance totale parcourue
+    distance_totale = courses.aggregate(Sum('distance_parcourue'))['distance_parcourue__sum'] or 0
+    
+    # Pagination
+    paginator = Paginator(courses, 10)  # 10 courses par page
+    page_number = request.GET.get('page')
+    courses_page = paginator.get_page(page_number)
     
     # Tracer l'action
     ActionTraceur.objects.create(
@@ -65,16 +295,242 @@ def suivi_missions(request):
     )
     
     context = {
-        'courses': courses,
+        'courses': courses_page,
+        'distance_totale': distance_totale,
+        'search_query': search_query,
     }
     
     return render(request, 'suivi/suivi_missions.html', context)
 
 @login_required
 @user_passes_test(is_admin_or_superuser)
+def export_missions_pdf(request):
+    """Exporter la liste des missions en PDF"""
+    # Initialiser le queryset
+    queryset = Course.objects.all()
+    
+    # Recherche
+    search_query = request.GET.get('search', '')
+    if search_query:
+        queryset = queryset.filter(
+            Q(demandeur__first_name__icontains=search_query) |
+            Q(demandeur__last_name__icontains=search_query) |
+            Q(destination__icontains=search_query) |
+            Q(vehicule__immatriculation__icontains=search_query) |
+            Q(chauffeur__first_name__icontains=search_query) |
+            Q(chauffeur__last_name__icontains=search_query)
+        )
+    
+    # Tri
+    sort_by = request.GET.get('sort', '-date_demande')
+    valid_sort_fields = [
+        'date_demande', '-date_demande',
+        'demandeur__last_name', '-demandeur__last_name',
+        'destination', '-destination',
+        'statut', '-statut'
+    ]
+    
+    if sort_by not in valid_sort_fields:
+        sort_by = '-date_demande'  # Valeur par défaut sécurisée
+        
+    missions = queryset.order_by(sort_by)
+    
+    # Calculer la distance totale parcourue
+    distance_totale = queryset.aggregate(Sum('distance_parcourue'))['distance_parcourue__sum'] or 0
+    
+    # Préparer le contexte pour le template
+    context = {
+        'missions': missions,
+        'distance_totale': distance_totale,
+        'date_generation': timezone.now(),
+        'user': request.user,
+        'logo_path': request.build_absolute_uri(settings.STATIC_URL + 'images/logo.png')
+    }
+    
+    # Charger le template
+    template = get_template('suivi/pdf/missions_pdf.html')
+    html = template.render(context)
+    
+    # Créer le PDF
+    result = BytesIO()
+    pdf = pisa.pisaDocument(BytesIO(html.encode("UTF-8")), result)
+    
+    # Tracer l'action
+    ActionTraceur.objects.create(
+        utilisateur=request.user,
+        action="Export PDF du suivi des missions",
+    )
+    
+    if not pdf.err:
+        response = HttpResponse(result.getvalue(), content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="suivi_missions.pdf"'
+        return response
+    
+    return HttpResponse("Erreur lors de la génération du PDF", status=400)
+
+@login_required
+@user_passes_test(is_admin_or_superuser)
+def export_missions_excel(request):
+    """Exporter la liste des missions en Excel"""
+    # Initialiser le queryset
+    queryset = Course.objects.all()
+    
+    # Recherche
+    search_query = request.GET.get('search', '')
+    if search_query:
+        queryset = queryset.filter(
+            Q(demandeur__first_name__icontains=search_query) |
+            Q(demandeur__last_name__icontains=search_query) |
+            Q(destination__icontains=search_query) |
+            Q(vehicule__immatriculation__icontains=search_query) |
+            Q(chauffeur__first_name__icontains=search_query) |
+            Q(chauffeur__last_name__icontains=search_query)
+        )
+    
+    # Tri
+    sort_by = request.GET.get('sort', '-date_demande')
+    valid_sort_fields = [
+        'date_demande', '-date_demande',
+        'demandeur__last_name', '-demandeur__last_name',
+        'destination', '-destination',
+        'statut', '-statut'
+    ]
+    
+    if sort_by not in valid_sort_fields:
+        sort_by = '-date_demande'  # Valeur par défaut sécurisée
+        
+    missions = queryset.order_by(sort_by)
+    
+    # Calculer la distance totale parcourue
+    distance_totale = queryset.aggregate(Sum('distance_parcourue'))['distance_parcourue__sum'] or 0
+    
+    # Créer un nouveau classeur Excel
+    wb = xlwt.Workbook(encoding='utf-8')
+    ws = wb.add_sheet('Suivi Missions')
+    
+    # Définir les styles
+    header_style = xlwt.easyxf('font: bold on; pattern: pattern solid, fore_colour gray25; align: horiz center')
+    date_style = xlwt.easyxf('font: bold off; align: horiz right', num_format_str='DD/MM/YYYY HH:MM')
+    number_style = xlwt.easyxf('font: bold off; align: horiz right')
+    total_style = xlwt.easyxf('font: bold on; align: horiz right')
+    
+    # Écrire les en-têtes
+    headers = ['Date', 'Véhicule', 'Chauffeur', 'Demandeur', 'Destination', 'Statut', 'Distance (km)']
+    for col_num, header in enumerate(headers):
+        ws.write(0, col_num, header, header_style)
+        ws.col(col_num).width = 256 * 20  # 20 caractères de large
+    
+    # Écrire les données
+    row_num = 1
+    
+    for mission in missions:
+        # Écrire les données
+        ws.write(row_num, 0, mission.date_demande, date_style)
+        
+        if mission.vehicule:
+            ws.write(row_num, 1, mission.vehicule.immatriculation)
+        else:
+            ws.write(row_num, 1, "Non assigné")
+            
+        if mission.chauffeur:
+            ws.write(row_num, 2, mission.chauffeur.get_full_name())
+        else:
+            ws.write(row_num, 2, "Non assigné")
+            
+        if mission.demandeur:
+            if mission.demandeur.get_full_name():
+                ws.write(row_num, 3, mission.demandeur.get_full_name())
+            else:
+                ws.write(row_num, 3, mission.demandeur.username)
+        else:
+            ws.write(row_num, 3, "Non spécifié")
+            
+        ws.write(row_num, 4, mission.destination)
+        
+        # Statut en français
+        statut_map = {
+            'en_attente': 'En attente',
+            'validee': 'Validée',
+            'en_cours': 'En cours',
+            'terminee': 'Terminée',
+            'annulee': 'Annulée'
+        }
+        ws.write(row_num, 5, statut_map.get(mission.statut, mission.statut))
+        
+        if mission.distance_parcourue:
+            ws.write(row_num, 6, float(mission.distance_parcourue), number_style)
+        else:
+            ws.write(row_num, 6, "-")
+        
+        row_num += 1
+    
+    # Ajouter une ligne de total
+    row_num += 1
+    ws.write(row_num, 0, "TOTAL", total_style)
+    ws.write(row_num, 6, float(distance_totale), total_style)
+    
+    # Tracer l'action
+    ActionTraceur.objects.create(
+        utilisateur=request.user,
+        action="Export Excel du suivi des missions",
+    )
+    
+    # Préparer la réponse
+    response = HttpResponse(content_type='application/ms-excel')
+    response['Content-Disposition'] = 'attachment; filename="suivi_missions.xls"'
+    
+    # Sauvegarder le classeur dans la réponse
+    wb.save(response)
+    
+    return response
+
+@login_required
+@user_passes_test(is_admin_or_superuser)
 def suivi_entretiens(request):
     """Vue pour le suivi des entretiens"""
-    entretiens = Entretien.objects.all().order_by('-date_creation')
+    # Initialiser le queryset
+    queryset = Entretien.objects.all()
+    
+    # Recherche
+    search_query = request.GET.get('search', '')
+    date_debut = request.GET.get('date_debut')
+    date_fin = request.GET.get('date_fin')
+    
+    if search_query:
+        queryset = queryset.filter(
+            Q(vehicule__immatriculation__icontains=search_query) |
+            Q(garage__icontains=search_query) |
+            Q(motif__icontains=search_query)
+        )
+    
+    # Filtrer par date
+    if date_debut:
+        queryset = queryset.filter(date_entretien__date__gte=date_debut)
+    if date_fin:
+        queryset = queryset.filter(date_entretien__date__lte=date_fin)
+    
+    # Tri
+    sort_by = request.GET.get('sort', '-date_entretien')
+    valid_sort_fields = [
+        'date_entretien', '-date_entretien',
+        'vehicule__immatriculation', '-vehicule__immatriculation',
+        'garage', '-garage',
+        'cout', '-cout',
+        'statut', '-statut'
+    ]
+    
+    if sort_by not in valid_sort_fields:
+        sort_by = '-date_entretien'  # Valeur par défaut sécurisée
+    
+    entretiens = queryset.order_by(sort_by)
+    
+    # Calculer le coût total des entretiens
+    cout_total = queryset.aggregate(Sum('cout'))['cout__sum'] or 0
+    
+    # Pagination
+    paginator = Paginator(entretiens, 10)  # 10 entretiens par page
+    page_number = request.GET.get('page')
+    entretiens_page = paginator.get_page(page_number)
     
     # Tracer l'action
     ActionTraceur.objects.create(
@@ -83,16 +539,243 @@ def suivi_entretiens(request):
     )
     
     context = {
-        'entretiens': entretiens,
+        'entretiens': entretiens_page,
+        'cout_total': cout_total,
+        'search_query': search_query,
+        'date_debut': date_debut,
+        'date_fin': date_fin,
     }
     
     return render(request, 'suivi/suivi_entretiens.html', context)
 
 @login_required
 @user_passes_test(is_admin_or_superuser)
+def export_entretiens_pdf(request):
+    """Exporter la liste des entretiens en PDF"""
+    # Initialiser le queryset
+    queryset = Entretien.objects.all()
+    
+    # Recherche
+    search_query = request.GET.get('search', '')
+    date_debut = request.GET.get('date_debut')
+    date_fin = request.GET.get('date_fin')
+    
+    if search_query:
+        queryset = queryset.filter(
+            Q(vehicule__immatriculation__icontains=search_query) |
+            Q(garage__icontains=search_query) |
+            Q(motif__icontains=search_query)
+        )
+    
+    # Filtrer par date
+    if date_debut:
+        queryset = queryset.filter(date_entretien__date__gte=date_debut)
+    if date_fin:
+        queryset = queryset.filter(date_entretien__date__lte=date_fin)
+    
+    # Tri
+    sort_by = request.GET.get('sort', '-date_entretien')
+    valid_sort_fields = [
+        'date_entretien', '-date_entretien',
+        'vehicule__immatriculation', '-vehicule__immatriculation',
+        'garage', '-garage',
+        'cout', '-cout',
+        'statut', '-statut'
+    ]
+    
+    if sort_by not in valid_sort_fields:
+        sort_by = '-date_entretien'  # Valeur par défaut sécurisée
+    
+    entretiens = queryset.order_by(sort_by)
+    
+    # Calculer le coût total des entretiens
+    cout_total = queryset.aggregate(Sum('cout'))['cout__sum'] or 0
+    
+    # Préparer le contexte pour le template
+    context = {
+        'entretiens': entretiens,
+        'cout_total': cout_total,
+        'date_generation': timezone.now(),
+        'user': request.user,
+        'logo_path': request.build_absolute_uri(settings.STATIC_URL + 'images/logo.png')
+    }
+    
+    # Charger le template
+    template = get_template('suivi/pdf/entretiens_pdf.html')
+    html = template.render(context)
+    
+    # Créer le PDF
+    result = BytesIO()
+    pdf = pisa.pisaDocument(BytesIO(html.encode("UTF-8")), result)
+    
+    # Tracer l'action
+    ActionTraceur.objects.create(
+        utilisateur=request.user,
+        action="Export PDF du suivi des entretiens",
+    )
+    
+    if not pdf.err:
+        response = HttpResponse(result.getvalue(), content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="suivi_entretiens.pdf"'
+        return response
+    
+    return HttpResponse("Erreur lors de la génération du PDF", status=400)
+
+@login_required
+@user_passes_test(is_admin_or_superuser)
+def export_entretiens_excel(request):
+    """Exporter la liste des entretiens en Excel"""
+    # Initialiser le queryset
+    queryset = Entretien.objects.all()
+    
+    # Recherche
+    search_query = request.GET.get('search', '')
+    date_debut = request.GET.get('date_debut')
+    date_fin = request.GET.get('date_fin')
+    
+    if search_query:
+        queryset = queryset.filter(
+            Q(vehicule__immatriculation__icontains=search_query) |
+            Q(garage__icontains=search_query) |
+            Q(motif__icontains=search_query)
+        )
+    
+    # Filtrer par date
+    if date_debut:
+        queryset = queryset.filter(date_entretien__date__gte=date_debut)
+    if date_fin:
+        queryset = queryset.filter(date_entretien__date__lte=date_fin)
+    
+    # Tri
+    sort_by = request.GET.get('sort', '-date_entretien')
+    valid_sort_fields = [
+        'date_entretien', '-date_entretien',
+        'vehicule__immatriculation', '-vehicule__immatriculation',
+        'garage', '-garage',
+        'cout', '-cout',
+        'statut', '-statut'
+    ]
+    
+    if sort_by not in valid_sort_fields:
+        sort_by = '-date_entretien'  # Valeur par défaut sécurisée
+    
+    entretiens = queryset.order_by(sort_by)
+    
+    # Calculer le coût total des entretiens
+    cout_total = queryset.aggregate(Sum('cout'))['cout__sum'] or 0
+    
+    # Créer un nouveau classeur Excel
+    wb = xlwt.Workbook(encoding='utf-8')
+    ws = wb.add_sheet('Suivi Entretiens')
+    
+    # Définir les styles
+    header_style = xlwt.easyxf('font: bold on; pattern: pattern solid, fore_colour gray25; align: horiz center')
+    date_style = xlwt.easyxf('font: bold off; align: horiz right', num_format_str='DD/MM/YYYY')
+    number_style = xlwt.easyxf('font: bold off; align: horiz right')
+    total_style = xlwt.easyxf('font: bold on; align: horiz right')
+    
+    # Écrire les en-têtes
+    headers = ['Date', 'Véhicule', 'Garage', 'Motif', 'Coût ($)', 'Statut']
+    for col_num, header in enumerate(headers):
+        ws.write(0, col_num, header, header_style)
+        ws.col(col_num).width = 256 * 20  # 20 caractères de large
+    
+    # Écrire les données
+    row_num = 1
+    
+    for entretien in entretiens:
+        # Écrire les données
+        ws.write(row_num, 0, entretien.date_entretien, date_style)
+        ws.write(row_num, 1, f"{entretien.vehicule.immatriculation} ({entretien.vehicule.marque} {entretien.vehicule.modele})")
+        ws.write(row_num, 2, entretien.garage)
+        ws.write(row_num, 3, entretien.motif)
+        ws.write(row_num, 4, float(entretien.cout), number_style)
+        
+        # Statut en français
+        statut_map = {
+            'planifie': 'Planifié',
+            'en_cours': 'En cours',
+            'termine': 'Terminé',
+            'annule': 'Annulé'
+        }
+        ws.write(row_num, 5, statut_map.get(entretien.statut, entretien.statut))
+        
+        row_num += 1
+    
+    # Ajouter une ligne de total
+    row_num += 1
+    ws.write(row_num, 0, "TOTAL", total_style)
+    ws.write(row_num, 4, float(cout_total), total_style)
+    
+    # Tracer l'action
+    ActionTraceur.objects.create(
+        utilisateur=request.user,
+        action="Export Excel du suivi des entretiens",
+    )
+    
+    # Préparer la réponse
+    response = HttpResponse(content_type='application/ms-excel')
+    response['Content-Disposition'] = 'attachment; filename="suivi_entretiens.xls"'
+    
+    # Sauvegarder le classeur dans la réponse
+    wb.save(response)
+    
+    return response
+
+@login_required
+@user_passes_test(is_admin_or_superuser)
 def suivi_carburant(request):
     """Vue pour le suivi de la consommation de carburant"""
-    ravitaillements = Ravitaillement.objects.all().order_by('-date_creation')
+    # Initialiser le queryset
+    queryset = Ravitaillement.objects.all()
+    
+    # Recherche
+    search_query = request.GET.get('search', '')
+    if search_query:
+        queryset = queryset.filter(
+            Q(vehicule__immatriculation__icontains=search_query) |
+            Q(nom_station__icontains=search_query) |
+            Q(commentaires__icontains=search_query)
+        )
+    
+    # Filtres supplémentaires
+    vehicule_id = request.GET.get('vehicule')
+    date_debut = request.GET.get('date_debut')
+    date_fin = request.GET.get('date_fin')
+    
+    if vehicule_id:
+        queryset = queryset.filter(vehicule_id=vehicule_id)
+    if date_debut:
+        queryset = queryset.filter(date_ravitaillement__date__gte=date_debut)
+    if date_fin:
+        queryset = queryset.filter(date_ravitaillement__date__lte=date_fin)
+    
+    # Tri
+    sort_by = request.GET.get('sort', '-date_ravitaillement')
+    valid_sort_fields = [
+        'date_ravitaillement', '-date_ravitaillement',
+        'vehicule__immatriculation', '-vehicule__immatriculation',
+        'litres', '-litres',
+        'cout_total', '-cout_total',
+        'consommation_moyenne', '-consommation_moyenne'
+    ]
+    
+    if sort_by not in valid_sort_fields:
+        sort_by = '-date_ravitaillement'  # Valeur par défaut sécurisée
+        
+    queryset = queryset.order_by(sort_by)
+    
+    # Calcul des totaux
+    total_litres = queryset.aggregate(Sum('litres'))['litres__sum'] or 0
+    total_cout = queryset.aggregate(Sum('cout_total'))['cout_total__sum'] or 0
+    
+    # Pagination
+    paginator = Paginator(queryset, 10)  # 10 ravitaillements par page
+    page_number = request.GET.get('page')
+    ravitaillements_page = paginator.get_page(page_number)
+    
+    # Récupérer tous les véhicules pour le filtre
+    vehicules = Vehicule.objects.all().order_by('immatriculation')
     
     # Tracer l'action
     ActionTraceur.objects.create(
@@ -101,7 +784,191 @@ def suivi_carburant(request):
     )
     
     context = {
-        'ravitaillements': ravitaillements,
+        'ravitaillements': ravitaillements_page,
+        'vehicules': vehicules,
+        'total_litres': total_litres,
+        'total_cout': total_cout,
+        'search_query': search_query,
+        'selected_vehicule': vehicule_id,
+        'date_debut': date_debut,
+        'date_fin': date_fin,
+        'selected_sort': sort_by,
     }
     
     return render(request, 'suivi/suivi_carburant.html', context)
+
+@login_required
+@user_passes_test(is_admin_or_superuser)
+def export_carburant_pdf(request):
+    """Exporter le suivi de la consommation de carburant en PDF"""
+    # Initialiser le queryset
+    queryset = Ravitaillement.objects.all()
+    
+    # Appliquer les filtres comme dans la vue suivi_carburant
+    search_query = request.GET.get('search', '')
+    vehicule_id = request.GET.get('vehicule')
+    date_debut = request.GET.get('date_debut')
+    date_fin = request.GET.get('date_fin')
+    
+    if search_query:
+        queryset = queryset.filter(
+            Q(vehicule__immatriculation__icontains=search_query) |
+            Q(nom_station__icontains=search_query) |
+            Q(commentaires__icontains=search_query)
+        )
+    
+    if vehicule_id:
+        queryset = queryset.filter(vehicule_id=vehicule_id)
+    if date_debut:
+        queryset = queryset.filter(date_ravitaillement__date__gte=date_debut)
+    if date_fin:
+        queryset = queryset.filter(date_ravitaillement__date__lte=date_fin)
+    
+    # Tri
+    sort_by = request.GET.get('sort', '-date_ravitaillement')
+    valid_sort_fields = [
+        'date_ravitaillement', '-date_ravitaillement',
+        'vehicule__immatriculation', '-vehicule__immatriculation',
+        'litres', '-litres',
+        'cout_total', '-cout_total'
+    ]
+    
+    if sort_by not in valid_sort_fields:
+        sort_by = '-date_ravitaillement'
+        
+    ravitaillements = queryset.order_by(sort_by)
+    
+    # Calcul des totaux
+    total_litres = ravitaillements.aggregate(Sum('litres'))['litres__sum'] or 0
+    total_cout = ravitaillements.aggregate(Sum('cout_total'))['cout_total__sum'] or 0
+    
+    # Préparer le contexte pour le template
+    context = {
+        'ravitaillements': ravitaillements,
+        'total_litres': total_litres,
+        'total_cout': total_cout,
+        'date_generation': timezone.now(),
+        'user': request.user,
+        'logo_path': request.build_absolute_uri(settings.STATIC_URL + 'images/logo.png')
+    }
+    
+    # Charger le template
+    template = get_template('suivi/pdf/carburant_pdf.html')
+    html = template.render(context)
+    
+    # Créer le PDF
+    result = BytesIO()
+    pdf = pisa.pisaDocument(BytesIO(html.encode("UTF-8")), result)
+    
+    # Tracer l'action
+    ActionTraceur.objects.create(
+        utilisateur=request.user,
+        action="Export PDF du suivi de la consommation de carburant",
+    )
+    
+    if not pdf.err:
+        response = HttpResponse(result.getvalue(), content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="suivi_carburant.pdf"'
+        return response
+    
+    return HttpResponse("Erreur lors de la génération du PDF", status=400)
+
+@login_required
+@user_passes_test(is_admin_or_superuser)
+def export_carburant_excel(request):
+    """Exporter le suivi de la consommation de carburant en Excel"""
+    # Initialiser le queryset
+    queryset = Ravitaillement.objects.all()
+    
+    # Appliquer les filtres comme dans la vue suivi_carburant
+    search_query = request.GET.get('search', '')
+    vehicule_id = request.GET.get('vehicule')
+    date_debut = request.GET.get('date_debut')
+    date_fin = request.GET.get('date_fin')
+    
+    if search_query:
+        queryset = queryset.filter(
+            Q(vehicule__immatriculation__icontains=search_query) |
+            Q(nom_station__icontains=search_query) |
+            Q(commentaires__icontains=search_query)
+        )
+    
+    if vehicule_id:
+        queryset = queryset.filter(vehicule_id=vehicule_id)
+    if date_debut:
+        queryset = queryset.filter(date_ravitaillement__date__gte=date_debut)
+    if date_fin:
+        queryset = queryset.filter(date_ravitaillement__date__lte=date_fin)
+    
+    # Tri
+    sort_by = request.GET.get('sort', '-date_ravitaillement')
+    valid_sort_fields = [
+        'date_ravitaillement', '-date_ravitaillement',
+        'vehicule__immatriculation', '-vehicule__immatriculation',
+        'litres', '-litres',
+        'cout_total', '-cout_total'
+    ]
+    
+    if sort_by not in valid_sort_fields:
+        sort_by = '-date_ravitaillement'
+        
+    ravitaillements = queryset.order_by(sort_by)
+    
+    # Calcul des totaux
+    total_litres = ravitaillements.aggregate(Sum('litres'))['litres__sum'] or 0
+    total_cout = ravitaillements.aggregate(Sum('cout_total'))['cout_total__sum'] or 0
+    
+    # Créer un nouveau classeur Excel
+    wb = xlwt.Workbook(encoding='utf-8')
+    ws = wb.add_sheet('Suivi Carburant')
+    
+    # Définir les styles
+    header_style = xlwt.easyxf('font: bold on; pattern: pattern solid, fore_colour gray25; align: horiz center')
+    date_style = xlwt.easyxf('font: bold off; align: horiz right', num_format_str='DD/MM/YYYY HH:MM')
+    number_style = xlwt.easyxf('font: bold off; align: horiz right')
+    
+    # Écrire les en-têtes
+    headers = ['Date', 'Véhicule', 'Station', 'Kilométrage', 'Distance', 'Litres', 'Prix/L', 'Coût total', 'Conso. (L/100km)']
+    for col_num, header in enumerate(headers):
+        ws.write(0, col_num, header, header_style)
+        ws.col(col_num).width = 256 * 20  # 20 caractères de large
+    
+    # Écrire les données
+    row_num = 1
+    for ravitaillement in ravitaillements:
+        ws.write(row_num, 0, ravitaillement.date_ravitaillement, date_style)
+        ws.write(row_num, 1, ravitaillement.vehicule.immatriculation)
+        ws.write(row_num, 2, ravitaillement.nom_station or 'Non spécifiée')
+        ws.write(row_num, 3, ravitaillement.kilometrage_apres, number_style)
+        ws.write(row_num, 4, ravitaillement.distance_parcourue, number_style)
+        ws.write(row_num, 5, float(ravitaillement.litres), number_style)
+        ws.write(row_num, 6, float(ravitaillement.cout_unitaire), number_style)
+        ws.write(row_num, 7, float(ravitaillement.cout_total), number_style)
+        
+        if ravitaillement.consommation_moyenne > 0:
+            ws.write(row_num, 8, float(ravitaillement.consommation_moyenne), number_style)
+        else:
+            ws.write(row_num, 8, 'N/A')
+        
+        row_num += 1
+    
+    # Ajouter une ligne de total
+    row_num += 1
+    ws.write(row_num, 0, 'TOTAL', xlwt.easyxf('font: bold on'))
+    ws.write(row_num, 5, float(total_litres), xlwt.easyxf('font: bold on; align: horiz right'))
+    ws.write(row_num, 7, float(total_cout), xlwt.easyxf('font: bold on; align: horiz right'))
+    
+    # Tracer l'action
+    ActionTraceur.objects.create(
+        utilisateur=request.user,
+        action="Export Excel du suivi de la consommation de carburant",
+    )
+    
+    # Préparer la réponse
+    response = HttpResponse(content_type='application/ms-excel')
+    response['Content-Disposition'] = 'attachment; filename="suivi_carburant.xls"'
+    
+    # Sauvegarder le classeur dans la réponse
+    wb.save(response)
+    
+    return response

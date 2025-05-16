@@ -1,0 +1,42 @@
+[
+{
+    "model": "core.vehicule",
+    "pk": 1,
+    "fields": {
+        "immatriculation": "3559AV05",
+        "marque": "TOYOTA",
+        "modele": "hilux",
+        "couleur": "ROUGE",
+        "numero_chassis": "45753-3544212",
+        "image": "images_vehicules/BROUSSE2.jpg",
+        "date_immatriculation": null,
+        "date_expiration_assurance": "2025-05-10",
+        "date_expiration_controle_technique": "2025-05-10",
+        "date_expiration_vignette": "2025-05-10",
+        "date_expiration_stationnement": "2025-05-10",
+        "date_creation": "2025-05-10T19:05:24.181Z",
+        "date_modification": "2025-05-11T14:47:00.359Z",
+        "createur": 2
+    }
+},
+{
+    "model": "core.vehicule",
+    "pk": 2,
+    "fields": {
+        "immatriculation": "59600av05",
+        "marque": "TOYOTA",
+        "modele": "Corolla",
+        "couleur": "bleu",
+        "numero_chassis": "46-1541541-150042",
+        "image": "images_vehicules/9400av.jpg",
+        "date_immatriculation": null,
+        "date_expiration_assurance": "2025-06-05",
+        "date_expiration_controle_technique": "2025-05-05",
+        "date_expiration_vignette": "2025-04-05",
+        "date_expiration_stationnement": "2025-07-05",
+        "date_creation": "2025-05-13T06:00:21.654Z",
+        "date_modification": "2025-05-13T06:00:21.654Z",
+        "createur": 2
+    }
+}
+]

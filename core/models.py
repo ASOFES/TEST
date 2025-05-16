@@ -30,6 +30,7 @@ class Vehicule(models.Model):
     couleur = models.CharField(max_length=30)
     numero_chassis = models.CharField(max_length=50, unique=True)
     image = models.ImageField(upload_to='images_vehicules/', blank=True, null=True)
+    date_immatriculation = models.DateField(null=True, blank=True)
     date_expiration_assurance = models.DateField()
     date_expiration_controle_technique = models.DateField()
     date_expiration_vignette = models.DateField()
@@ -77,6 +78,7 @@ class Course(models.Model):
     destination = models.CharField(max_length=255)
     motif = models.TextField()
     date_demande = models.DateTimeField(auto_now_add=True)
+    date_souhaitee = models.DateTimeField(null=True, blank=True)
     
     # Champs remplis par le dispatcher
     chauffeur = models.ForeignKey(Utilisateur, on_delete=models.SET_NULL, null=True, blank=True, related_name='courses_assignees')

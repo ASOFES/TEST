@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+
+{% block title %}Tableau de bord Ravitaillement{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0"><i class="fas fa-gas-pump me-2"></i>Tableau de bord Ravitaillement</h4>
+                    <a href="{% url 'ravitaillement:liste_ravitaillements' %}" class="btn btn-light btn-sm">
+                        <i class="fas fa-list me-1"></i>Liste complète
+                    </a>
+                </div>
+                <div class="card-body">
+                    <!-- Message d'information sur le module -->
+                    <div class="alert alert-info mb-4">
+                        <h5><i class="fas fa-info-circle me-2"></i>Bienvenue dans le module de Ravitaillement</h5>
+                        <p>Ce module vous permet de gérer les ravitaillements de carburant pour votre flotte de véhicules. Vous pouvez :</p>
+                        <ul>
+                            <li>Enregistrer de nouveaux ravitaillements</li>
+                            <li>Consulter l'historique des ravitaillements</li>
+                            <li>Suivre les coûts de carburant par véhicule</li>
+                            <li>Analyser la consommation de carburant</li>
+                        </ul>
+                        <p>Pour commencer, utilisez les boutons d'action rapide ci-dessous.</p>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 border-0 shadow-sm module-ravitaillement">
+                                <div class="card-body text-center text-white">
+                                    <h1 class="display-4">{{ ravitaillements_count }}</h1>
+                                    <h5>Ravitaillements enregistrés</h5>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-8 mb-3">
+                            <div class="card h-100 border-0 shadow-sm">
+                                <div class="card-body">
+                                    <h5 class="card-title mb-3">Actions rapides</h5>
+                                    <div class="d-grid gap-2">
+                                        <a href="{% url 'ravitaillement:ajouter_ravitaillement' %}" class="btn btn-success">
+                                            <i class="fas fa-plus-circle me-2"></i>Nouveau ravitaillement
+                                        </a>
+                                        <a href="{% url 'ravitaillement:liste_ravitaillements' %}" class="btn btn-primary">
+                                            <i class="fas fa-search me-2"></i>Rechercher des ravitaillements
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-history me-2"></i>Ravitaillements récents</h5>
+                    <div>
+                        <a href="{% url 'ravitaillement:exporter_ravitaillements_pdf' %}{{ request.GET.urlencode|safe }}" class="btn btn-danger btn-sm">
+                            <i class="fas fa-file-pdf me-1"></i>PDF
+                        </a>
+                        <a href="{% url 'ravitaillement:exporter_ravitaillements_excel' %}{{ request.GET.urlencode|safe }}" class="btn btn-success btn-sm">
+                            <i class="fas fa-file-excel me-1"></i>Excel
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Options de tri et filtrage -->
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <form method="get" class="row g-2">
+                                <div class="col-md-4">
+                                    <label for="vehicule" class="form-label">Filtrer par véhicule</label>
+                                    <select name="vehicule" id="vehicule" class="form-select">
+                                        <option value="">Tous les véhicules</option>
+                                        {% for vehicule in vehicules %}
+                                            <option value="{{ vehicule.id }}" {% if selected_vehicule == vehicule.id|stringformat:"i" %}selected{% endif %}>
+                                                {{ vehicule.immatriculation }} - {{ vehicule.marque }} {{ vehicule.modele }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="tri" class="form-label">Trier par</label>
+                                    <select name="tri" id="tri" class="form-select">
+                                        <option value="date" {% if selected_tri == 'date' %}selected{% endif %}>Date (récent → ancien)</option>
+                                        <option value="date_asc" {% if selected_tri == 'date_asc' %}selected{% endif %}>Date (ancien → récent)</option>
+                                        <option value="vehicule" {% if selected_tri == 'vehicule' %}selected{% endif %}>Véhicule (A-Z)</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 d-flex align-items-end">
+                                    <div class="d-grid gap-2 w-100">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-filter me-1"></i>Appliquer
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    {% if ravitaillements_recents %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Véhicule</th>
+                                        <th>Station</th>
+                                        <th>Litres</th>
+                                        <th>Coût total</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for ravitaillement in ravitaillements_recents %}
+                                        <tr>
+                                            <td>{{ ravitaillement.date_ravitaillement|date:"d/m/Y H:i" }}</td>
+                                            <td>{{ ravitaillement.vehicule.immatriculation }}</td>
+                                            <td>{{ ravitaillement.nom_station|default:"-" }}</td>
+                                            <td>{{ ravitaillement.litres }} L</td>
+                                            <td>{{ ravitaillement.cout_total }} $</td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <a href="{% url 'ravitaillement:detail_ravitaillement' ravitaillement_id=ravitaillement.id %}" class="btn btn-sm btn-info" title="Détails">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <a href="{% url 'ravitaillement:exporter_ravitaillement_pdf' ravitaillement_id=ravitaillement.id %}" class="btn btn-sm btn-danger" title="Exporter en PDF">
+                                                        <i class="fas fa-file-pdf"></i>
+                                                    </a>
+                                                    <a href="{% url 'ravitaillement:exporter_ravitaillement_excel' ravitaillement_id=ravitaillement.id %}" class="btn btn-sm btn-success" title="Exporter en Excel">
+                                                        <i class="fas fa-file-excel"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>Aucun ravitaillement n'a été enregistré pour le moment. 
+                            <a href="{% url 'ravitaillement:ajouter_ravitaillement' %}" class="alert-link">Cliquez ici pour ajouter votre premier ravitaillement</a>.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialiser les sélecteurs avec Select2 pour une meilleure expérience utilisateur
+        if (typeof $.fn.select2 !== 'undefined') {
+            $('#vehicule, #tri').select2({
+                theme: 'bootstrap-5',
+                width: '100%'
+            });
+        }
+    });
+</script>
+{% endblock %} 

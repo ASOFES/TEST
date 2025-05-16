@@ -8,6 +8,9 @@ urlpatterns = [
     path('demande/<int:demande_id>/', views.detail_demande, name='detail_demande'),
     path('demande/<int:demande_id>/traiter/', views.traiter_demande, name='traiter_demande'),
     
+    # URL pour la liste des courses (nouvelle)
+    path('courses/', views.dashboard, name='liste_courses'),
+    
     # URLs pour le suivi kilométrique
     path('suivi-kilometrage/', views.suivi_kilometrage, name='suivi_kilometrage'),
     path('suivi-kilometrage/excel/', views.export_suivi_kilometrage_excel, name='suivi_kilometrage_excel'),

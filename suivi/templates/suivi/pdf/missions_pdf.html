@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Suivi des Missions</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .logo img {
+            max-width: 150px;
+            max-height: 100px;
+        }
+        .company-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        .info {
+            font-size: 10px;
+            margin-bottom: 20px;
+            text-align: right;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 10px;
+            padding: 10px 0;
+        }
+        .status-en-attente {
+            color: orange;
+            font-weight: bold;
+        }
+        .status-validee {
+            color: blue;
+            font-weight: bold;
+        }
+        .status-en-cours {
+            color: purple;
+            font-weight: bold;
+        }
+        .status-terminee {
+            color: green;
+            font-weight: bold;
+        }
+        .status-annulee {
+            color: red;
+            font-weight: bold;
+        }
+        .total-row {
+            font-weight: bold;
+            background-color: #f2f2f2;
+        }
+        .summary {
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .summary h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <img src="{{ logo_path }}" alt="Logo ASOFES">
+        </div>
+        <div class="company-name">ASOFES</div>
+        <div class="title">SUIVI DES MISSIONS</div>
+        <div class="subtitle">Rapport généré le {{ date_generation|date:"d/m/Y à H:i" }}</div>
+    </div>
+    
+    <div class="info">
+        <p>Généré par: {{ user.first_name }} {{ user.last_name }}</p>
+        <p>Utilisateur: {{ user.username }}</p>
+    </div>
+    
+    <div class="summary">
+        <h3>Résumé</h3>
+        <p><strong>Nombre total de missions:</strong> {{ missions|length }}</p>
+        <p><strong>Distance totale parcourue:</strong> {{ distance_totale|floatformat:0 }} km</p>
+        {% if search_query %}
+        <p><strong>Filtre de recherche appliqué:</strong> "{{ search_query }}"</p>
+        {% endif %}
+    </div>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Véhicule</th>
+                <th>Chauffeur</th>
+                <th>Demandeur</th>
+                <th>Destination</th>
+                <th>Statut</th>
+                <th>Distance</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for mission in missions %}
+            <tr>
+                <td>{{ mission.date_demande|date:"d/m/Y H:i" }}</td>
+                <td>
+                    {% if mission.vehicule %}
+                        {{ mission.vehicule.immatriculation }}
+                    {% else %}
+                        Non assigné
+                    {% endif %}
+                </td>
+                <td>
+                    {% if mission.chauffeur %}
+                        {{ mission.chauffeur.get_full_name }}
+                    {% else %}
+                        Non assigné
+                    {% endif %}
+                </td>
+                <td>
+                    {% if mission.demandeur %}
+                        {% if mission.demandeur.get_full_name %}
+                            {{ mission.demandeur.get_full_name }}
+                        {% else %}
+                            {{ mission.demandeur.username }}
+                        {% endif %}
+                    {% else %}
+                        Non spécifié
+                    {% endif %}
+                </td>
+                <td>{{ mission.destination }}</td>
+                <td>
+                    {% if mission.statut == 'en_attente' %}
+                        <span class="status-en-attente">En attente</span>
+                    {% elif mission.statut == 'validee' %}
+                        <span class="status-validee">Validée</span>
+                    {% elif mission.statut == 'en_cours' %}
+                        <span class="status-en-cours">En cours</span>
+                    {% elif mission.statut == 'terminee' %}
+                        <span class="status-terminee">Terminée</span>
+                    {% elif mission.statut == 'annulee' %}
+                        <span class="status-annulee">Annulée</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if mission.distance_parcourue %}
+                        {{ mission.distance_parcourue }} km
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+            <tr class="total-row">
+                <td colspan="6" style="text-align: right;">DISTANCE TOTALE</td>
+                <td>{{ distance_totale|floatformat:0 }} km</td>
+            </tr>
+        </tbody>
+    </table>
+    
+    <div class="footer">
+        <p>© {{ date_generation|date:"Y" }} - Système de Gestion des Véhicules</p>
+    </div>
+</body>
+</html> 
